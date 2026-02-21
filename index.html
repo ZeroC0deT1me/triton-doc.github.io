@@ -78,10 +78,42 @@
     font-family: 'DM Mono', monospace; font-size: 0.875rem; font-weight: 300;
     color: var(--muted); line-height: 1.8; margin-bottom: 1.1rem;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; max-height: calc(1.8em * 2 + 0.1px);
-    transition: max-height 0.35s ease, color 0.2s, -webkit-line-clamp 0.2s;
+    overflow: hidden;
   }
-  .card:hover .card-desc { -webkit-line-clamp: unset; max-height: 14rem; color: #9aa0be; }
+
+  /* ── Description popover ── */
+  .desc-popover {
+    position: fixed;
+    z-index: 9999;
+    background: #1a1f30;
+    border: 1px solid rgba(79,142,247,0.35);
+    border-radius: 12px;
+    padding: 1.1rem 1.3rem;
+    max-width: 360px;
+    min-width: 220px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(79,142,247,0.08);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.825rem;
+    font-weight: 300;
+    color: #9aa8cc;
+    line-height: 1.8;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .desc-popover.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .desc-popover-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.55rem;
+  }
 
   /* Inner class pills */
   .card-inners { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
@@ -105,6 +137,17 @@
   footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 1.75rem 4rem; display: flex; align-items: center; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); }
   footer a { color: var(--muted); text-decoration: none; }
   footer a:hover { color: var(--text); }
+
+  .desc-link {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(79,142,247,0.3);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .desc-link:hover {
+    color: #7fb3ff;
+    border-bottom-color: rgba(79,142,247,0.7);
+  }
   mark { background: rgba(79,142,247,0.25); color: var(--accent); border-radius: 2px; padding: 0 1px; }
 
   @media (max-width: 700px) {
@@ -173,6 +216,36 @@
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const hi = (t,q) => q ? esc(t).replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>') : esc(t);
 
+  // className -> relative file path, built after docs load
+  let classLinks = {};
+
+  function buildClassLinks(docs) {
+    classLinks = {};
+    docs.forEach(d => {
+      classLinks[d.title] = d.file;
+      (d.innerClasses || []).forEach(ic => {
+        const name = ic.split(/[\s(]/)[0];
+        if (name) classLinks[name] = d.file;
+      });
+    });
+  }
+
+  // Render description: escape -> auto-link known class names -> search-highlight
+  function linkDesc(rawText, q) {
+    let s = esc(rawText);
+    const names = Object.keys(classLinks).sort((a, b) => b.length - a.length);
+    names.forEach(name => {
+      const safe = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp('\\b(' + safe + ')\\b(?![^<]*<\\/a>)', 'g');
+      s = s.replace(re, '<a href="' + classLinks[name] + '" class="desc-link">$1</a>');
+    });
+    if (q) {
+      const qSafe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      s = s.replace(new RegExp('(' + qSafe + ')(?=[^<>]*(?:<|$))', 'gi'), '<mark>$1</mark>');
+    }
+    return s;
+  }
+
   let allDocs=[], activeTag='all', searchQuery='';
 
   async function loadSite() {
@@ -189,6 +262,7 @@
     site.repo ? (rl.href=site.repo) : (rl.style.display='none');
 
     allDocs = docs||[];
+    buildClassLinks(allDocs);
     buildFilters();
     render();
     document.getElementById('loading').style.display='none';
@@ -247,7 +321,7 @@
           </div>
           <span class="card-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
         </div>
-        <p class="card-desc">${hi(doc.description||'',q)}</p>
+        <p class="card-desc">${linkDesc(doc.description||'',q)}</p>
         ${inners?`<div class="card-inners">${inners}</div>`:''}
         <div class="card-footer">
           <div class="card-tags">${tags}</div>
@@ -258,7 +332,78 @@
   }
 
   const si=document.getElementById('search'), cb=document.getElementById('search-clear');
-  si.addEventListener('input', ()=>{ searchQuery=si.value; cb.classList.toggle('visible',si.value.length>0); render(); });
+  // ── Description popover ──
+  const popover = document.createElement('div');
+  popover.className = 'desc-popover';
+  document.body.appendChild(popover);
+
+  let popoverTimer = null;
+
+  function showPopover(card, fullDesc) {
+    clearTimeout(popoverTimer);
+
+    const title = card.querySelector('.card-title')?.textContent || '';
+    popover.innerHTML = '<div class="desc-popover-title">' + esc(title) + '</div>' + fullDesc;
+
+    // Position: just above or below the card depending on screen space
+    const rect = card.getBoundingClientRect();
+    const popW = 360;
+    const gap = 10;
+
+    // Horizontal: align with card left, clamp to viewport
+    let left = rect.left;
+    if (left + popW > window.innerWidth - 16) left = window.innerWidth - popW - 16;
+    if (left < 16) left = 16;
+
+    // Vertical: prefer above card; fall back to below
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    let top;
+    if (spaceAbove >= 160 || spaceAbove >= spaceBelow) {
+      // Above — position bottom of popover at top of card
+      popover.style.bottom = '';
+      top = rect.top - gap;
+      popover.style.top = '';
+      // We'll use a trick: set top to the final value after we know height
+      popover.style.visibility = 'hidden';
+      popover.style.top = '0px';
+      popover.style.left = left + 'px';
+      popover.classList.add('visible');
+      const ph = popover.offsetHeight;
+      popover.classList.remove('visible');
+      popover.style.visibility = '';
+      top = rect.top - ph - gap;
+      if (top < 8) top = rect.bottom + gap; // flip to below if no room
+    } else {
+      top = rect.bottom + gap;
+    }
+
+    popover.style.top = top + 'px';
+    popover.style.left = left + 'px';
+
+    popoverTimer = setTimeout(() => popover.classList.add('visible'), 80);
+  }
+
+  function hidePopover() {
+    clearTimeout(popoverTimer);
+    popoverTimer = setTimeout(() => popover.classList.remove('visible'), 60);
+  }
+
+  // Attach after render — use event delegation on #grid
+  document.getElementById('grid').addEventListener('mouseover', e => {
+    const card = e.target.closest('.card');
+    if (!card) return;
+    const desc = card.querySelector('.card-desc');
+    if (!desc) return;
+    showPopover(card, desc.innerHTML);
+  });
+
+  document.getElementById('grid').addEventListener('mouseleave', () => hidePopover());
+  document.getElementById('grid').addEventListener('mouseout', e => {
+    if (!e.relatedTarget || !e.relatedTarget.closest('.card')) hidePopover();
+  });
+
+    si.addEventListener('input', ()=>{ searchQuery=si.value; cb.classList.toggle('visible',si.value.length>0); render(); });
   cb.addEventListener('click', ()=>{ si.value=''; searchQuery=''; cb.classList.remove('visible'); si.focus(); render(); });
 
   loadSite();
