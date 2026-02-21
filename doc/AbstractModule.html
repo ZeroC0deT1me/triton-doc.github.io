@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbstractModule — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117;--abstract:#fb923c}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2}
+  /* abstract class — orange accent */
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:.15em .55em;color:var(--abstract);background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25)}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--abstract)}
+  nav a.abstract-marker::after{content:'abstract';font-size:.6rem;margin-left:.4rem;color:var(--abstract);opacity:.7;font-weight:600;letter-spacing:.06em}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--abstract);background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.25);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--abstract);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:660px}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}.iface{color:#4ade80}.abst{color:#fb923c}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .callout-abstract{background:rgba(251,146,60,.08);border-color:var(--abstract);color:#fdba74}
+
+  /* Method table */
+  .method-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .method-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .method-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .method-table tr:last-child td{border-bottom:none}
+  .method-table tr:hover td{background:var(--surface2)}
+  .badge-abstract{display:inline-block;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--abstract);background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.2);border-radius:3px;padding:.1em .4em;vertical-align:middle;margin-left:.4rem}
+  .badge-final{display:inline-block;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a78bfa;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);border-radius:3px;padding:.1em .4em;vertical-align:middle;margin-left:.4rem}
+  .badge-concrete{display:inline-block;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:3px;padding:.1em .4em;vertical-align:middle;margin-left:.4rem}
+  .method-name{color:#fff;font-weight:600}
+  .method-ret{color:var(--accent2);font-size:.8rem}
+  .method-desc{color:var(--muted);font-size:.82rem;line-height:1.65}
+
+  /* Implementation skeleton box */
+  .impl-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden;margin:1.4rem 0}
+  .impl-box-header{padding:.65rem 1.25rem;background:rgba(251,146,60,.06);border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--abstract)}
+
+  aside::-webkit-scrollbar{width:4px}
+  aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr};aside{position:relative;height:auto};main{padding:2rem 1.5rem};h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">shared</div>
+    <div class="sidebar-classname">AbstractModule</div>
+    <span class="sidebar-kind">abstract class</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+    <a href="#implementing">Implementing</a>
+    <span class="nav-section">Lifecycle</span>
+    <a href="#close">close() &amp; onClose()</a>
+    <a href="#registered-name">Registered name</a>
+    <span class="nav-section">Abstract contract</span>
+    <a href="#start" class="abstract-marker">start()</a>
+    <a href="#visibility" class="abstract-marker">Visibility methods</a>
+    <a href="#bring-to-front" class="abstract-marker">bringToFront()</a>
+    <span class="nav-section">Concrete methods</span>
+    <a href="#set-on-close-listener">setOnCloseListener()</a>
+    <a href="#get-version">getVersion()</a>
+    <span class="nav-section">Interfaces</span>
+    <a href="#interfaces">Optional interfaces</a>
+  </nav>
+</aside>
+<main>
+
+  <div class="hero" id="overview">
+    <div class="hero-badge">shared · abstract class</div>
+    <h1>AbstractModule</h1>
+    <div class="hero-meta">
+      <span>Package <code>shared</code></span>
+      <span>Type <code>public abstract class</code></span>
+      <span>Implements <code>BottomBarMenuProvider</code> (optional)</span>
+    </div>
+    <p class="hero-desc">Base class for every Triton module. Provides a thread-safe close lifecycle, registered name tracking, and an on-close callback hook. Subclasses implement the abstract methods to define their window, startup logic, and visibility behaviour. The shell interacts with all modules exclusively through this contract.</p>
+  </div>
+
+  <section id="implementing">
+    <h2>Implementing</h2>
+    <p>Create a class called <code>Main</code> in your module's package and extend <code>AbstractModule</code>. The shell discovers and instantiates it by name.</p>
+<pre data-lang="Java"><code><span class="kw">public class</span> <span class="ty">Main</span> <span class="kw">extends</span> <span class="abst">AbstractModule</span> {
+
+    <span class="kw">private</span> <span class="ty">EchelonFrame</span> frame;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">start</span>() {
+        frame = <span class="kw">new</span> <span class="ty">EchelonFrame</span>(<span class="str">"My Module"</span>);
+        <span class="cm">// build UI, set size, etc.</span>
+        frame.setVisible(<span class="kw">true</span>);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">protected void</span> <span class="fn">onClose</span>() {
+        <span class="kw">if</span> (frame != <span class="kw">null</span>) frame.dispose();
+    }
+
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">bringToFront</span>() { frame.toFront(); frame.requestFocus(); }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">hideModule</span>()   { frame.setVisible(<span class="kw">false</span>); }
+    <span class="an">@Override</span> <span class="kw">public void</span> <span class="fn">showModule</span>()   { frame.setVisible(<span class="kw">true</span>); }
+    <span class="an">@Override</span> <span class="kw">public boolean</span> <span class="fn">isVisible</span>()  { <span class="kw">return</span> frame != <span class="kw">null</span> &amp;&amp; frame.isVisible(); }
+}</code></pre>
+  </section>
+
+  <section id="close">
+    <h2>close() &amp; onClose()</h2>
+    <p><code>close()</code> is <code>final</code> — you cannot override it. It uses an <code>AtomicBoolean</code> with <code>compareAndSet</code> to guarantee that <code>onClose()</code> and the registered listener run exactly once, even if multiple threads race to close the same module simultaneously.</p>
+    <div class="callout callout-abstract">
+      <strong>Your cleanup goes in onClose()</strong>
+      Override <code>protected void onClose()</code> to dispose windows, stop background threads, flush state, or release resources. Do not call <code>close()</code> from inside <code>onClose()</code> — it is a no-op after the first call but signals a logic error.
+    </div>
+<pre data-lang="Java"><code><span class="cm">// Thread-safe — safe to call from any thread, any number of times</span>
+<span class="kw">public final void</span> <span class="fn">close</span>() {
+    <span class="kw">if</span> (!closed.<span class="fn">compareAndSet</span>(<span class="kw">false</span>, <span class="kw">true</span>)) <span class="kw">return</span>; <span class="cm">// already closed</span>
+    <span class="fn">onClose</span>();
+    <span class="kw">if</span> (onCloseListener != <span class="kw">null</span>) onCloseListener.<span class="fn">run</span>();
+}</code></pre>
+    <p>The on-close listener (set via <code>setOnCloseListener()</code>) is called by the shell to remove the module from the bottom bar and do its own bookkeeping — you don't call it yourself.</p>
+  </section>
+
+  <section id="registered-name">
+    <h2>Registered Name</h2>
+    <p>The shell calls <code>setRegisteredName()</code> when the module is first opened, storing the human-readable name it was launched under (e.g. <code>"Calculator"</code>). Use <code>getRegisteredName()</code> if your module needs to refer to its own name in the UI or in logs.</p>
+<pre data-lang="Java"><code><span class="cm">// Available any time after start() has been called</span>
+<span class="ty">String</span> name = <span class="fn">getRegisteredName</span>(); <span class="cm">// e.g. "Calculator"</span></code></pre>
+  </section>
+
+  <section id="start">
+    <h2>start() <span class="badge-abstract">abstract</span></h2>
+    <p>Called by the shell once, on the Swing EDT, after instantiation. This is where you build and display your window. It is guaranteed to be called exactly once — you do not need to guard against duplicate calls.</p>
+    <div class="callout callout-warn">
+      <strong>EDT requirement</strong>
+      <code>start()</code> is called on the EDT. Do not perform long-running I/O or blocking operations here. Launch a background thread or use a <code>SwingWorker</code> for heavy initialisation, then show the window once it's ready.
+    </div>
+  </section>
+
+  <section id="visibility">
+    <h2>Visibility methods <span class="badge-abstract">abstract</span></h2>
+    <p>The shell calls these when the user interacts with the bottom bar (e.g. clicking the button to show/hide, or the desktop hiding all windows). Implement them to reflect the visibility of your primary window.</p>
+    <table class="method-table">
+      <thead><tr><th>Method</th><th>When called</th><th>Typical implementation</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="method-name">showModule()</span></td>
+          <td>User clicks the bottom bar button while module is hidden</td>
+          <td><code>frame.setVisible(true)</code></td>
+        </tr>
+        <tr>
+          <td><span class="method-name">hideModule()</span></td>
+          <td>User hides the module or the desktop hides all windows</td>
+          <td><code>frame.setVisible(false)</code></td>
+        </tr>
+        <tr>
+          <td><span class="method-name">isVisible()</span> → <code>boolean</code></td>
+          <td>Bottom bar polling to set button state</td>
+          <td><code>return frame != null &amp;&amp; frame.isVisible()</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="bring-to-front">
+    <h2>bringToFront() <span class="badge-abstract">abstract</span></h2>
+    <p>Called when the user clicks the bottom bar button while the module is already visible — the expectation is that the window is raised and focused above other windows.</p>
+<pre data-lang="Java"><code><span class="an">@Override</span>
+<span class="kw">public void</span> <span class="fn">bringToFront</span>() {
+    <span class="kw">if</span> (frame == <span class="kw">null</span>) <span class="kw">return</span>;
+    frame.<span class="fn">setExtendedState</span>(frame.<span class="fn">getExtendedState</span>() &amp; ~<span class="ty">Frame</span>.ICONIFIED);
+    frame.<span class="fn">setVisible</span>(<span class="kw">true</span>);
+    frame.<span class="fn">toFront</span>();
+    frame.<span class="fn">requestFocus</span>();
+}</code></pre>
+  </section>
+
+  <section id="set-on-close-listener">
+    <h2>setOnCloseListener() <span class="badge-concrete">concrete</span></h2>
+    <p>Called by the shell — not by module code. Registers the <code>Runnable</code> that the shell uses to do its own bookkeeping (removing the module from the bottom bar, freeing its slot, etc.) when <code>close()</code> is called.</p>
+    <div class="callout callout-info">
+      <strong>Don't call this yourself</strong>
+      Modules should never call <code>setOnCloseListener()</code>. The shell owns this listener. If you need to run code on close, override <code>onClose()</code> instead.
+    </div>
+  </section>
+
+  <section id="get-version">
+    <h2>getVersion() <span class="badge-concrete">concrete</span></h2>
+    <p>Returns a version string for the module. Defaults to <code>"R1"</code>. Override it to return your module's own version tag — shown in the bottom bar tooltip or about dialog.</p>
+<pre data-lang="Java"><code><span class="an">@Override</span>
+<span class="kw">public</span> <span class="ty">String</span> <span class="fn">getVersion</span>() {
+    <span class="kw">return</span> <span class="str">"2.4.1"</span>;
+}</code></pre>
+  </section>
+
+  <section id="interfaces">
+    <h2>Optional Interfaces</h2>
+    <p>Modules can opt in to additional shell features by implementing these interfaces alongside <code>AbstractModule</code>:</p>
+    <table class="method-table">
+      <thead><tr><th>Interface</th><th>What it unlocks</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="BottomBarMenuProvider.html" style="color:var(--success);text-decoration:none;font-weight:600">BottomBarMenuProvider</a></td>
+          <td>Custom right-click context menu items on the module's bottom bar button. The shell appends its default items (Bring to Front, Hide, Pin, Close) automatically.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>More optional interfaces will appear here as they are documented.</p>
+  </section>
+
+</main>
+</div>
+</body>
+</html>
