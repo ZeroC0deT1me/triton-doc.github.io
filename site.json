@@ -13,7 +13,7 @@
       "title": "EchelonFrame",
       "package": "triton.ui",
       "file": "doc/EchelonFrame.html",
-      "description": "Cross-platform base JFrame for all Triton windows. Always undecorated with custom WindowFactory chrome, enrolled with EchelonWindowPlacer, and supports window-open animations (zoom-reveal, fade). Manages a concurrent animation queue so rapid module launches each get their own animation.",
+      "description": "Base JFrame for all Triton windows. Always undecorated with WindowFactory chrome, enrolled with EchelonWindowPlacer for smart screen placement, floats above the desktop while the app is active, and supports window-open animations via a thread-safe queue so rapid back-to-back module launches each get their own animation.",
       "tags": [
         "ui",
         "chrome",
