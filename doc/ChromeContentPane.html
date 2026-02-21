@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChromeContentPane — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2}
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:.15em .55em;color:var(--accent);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2)}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--accent)}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:660px}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .callout-danger{background:rgba(239,68,68,.08);border-color:var(--danger);color:#fca5a5}
+  .data-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .data-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .data-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .data-table tr:last-child td{border-bottom:none}
+  .data-table tr:hover td{background:var(--surface2)}
+  .layer-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1.5rem 1.75rem;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .layer{display:flex;align-items:center;gap:1rem;padding:.65rem 1rem;border-radius:6px;margin-bottom:.5rem}
+  .layer:last-child{margin-bottom:0}
+  .layer-chrome{background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.25)}
+  .layer-client{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2)}
+  .layer-label{font-weight:600;color:#fff;flex:1}
+  .layer-note{color:var(--muted);font-size:.78rem}
+  aside::-webkit-scrollbar{width:4px}
+  aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr};aside{position:relative;height:auto};main{padding:2rem 1.5rem};h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">triton.ui</div>
+    <div class="sidebar-classname">ChromeContentPane</div>
+    <span class="sidebar-kind">public final class</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+    <a href="#structure">Layer structure</a>
+    <span class="nav-section">Overridden methods</span>
+    <a href="#add-impl">addImpl()</a>
+    <a href="#set-layout">setLayout()</a>
+    <a href="#remove">remove() / removeAll()</a>
+    <span class="nav-section">Internals</span>
+    <a href="#initializing-guard">Initializing guard</a>
+    <a href="#client-panel">clientPanel()</a>
+  </nav>
+</aside>
+<main>
+
+  <div class="hero" id="overview">
+    <div class="hero-badge">triton.ui</div>
+    <h1>ChromeContentPane</h1>
+    <div class="hero-meta">
+      <span>Package <code>triton.ui</code></span>
+      <span>Extends <code>JPanel</code></span>
+      <span>Visibility <code>public final class</code></span>
+    </div>
+    <p class="hero-desc">A shielded <code>JPanel</code> used as a <code>JFrame</code>'s content pane. Preserves the Triton chrome title bar in the <code>NORTH</code> slot by transparently redirecting all user <code>add()</code>, <code>setLayout()</code>, <code>remove()</code>, and <code>removeAll()</code> calls to an inner <em>client panel</em>. Hardened against early superclass calls that occur during <code>JPanel</code> construction.</p>
+  </div>
+
+  <section id="structure">
+    <h2>Layer Structure</h2>
+    <p>The pane has two logical layers. Code that calls <code>frame.getContentPane().add(...)</code> operates on the client layer — the chrome layer is never exposed to user code.</p>
+    <div class="layer-box">
+      <div class="layer layer-chrome">
+        <span class="layer-label">ChromeContentPane (outer JPanel, BorderLayout)</span>
+        <span class="layer-note">NORTH = EchelonTitleBar</span>
+      </div>
+      <div style="text-align:center;color:var(--border);font-size:1.2rem;margin:.25rem 0">↓ CENTER</div>
+      <div class="layer layer-client">
+        <span class="layer-label">client (inner JPanel)</span>
+        <span class="layer-note">all user content goes here</span>
+      </div>
+    </div>
+    <p>This means a module doing <code>frame.setLayout(new GridLayout(...))</code> or <code>frame.add(myPanel, BorderLayout.NORTH)</code> affects only the client panel — the title bar cannot be displaced or overwritten by module code.</p>
+  </section>
+
+  <section id="add-impl">
+    <h2>addImpl()</h2>
+    <p>The core interception point. Two special cases bypass normal redirection to the client:</p>
+    <table class="data-table">
+      <thead><tr><th>Condition</th><th>Routed to</th></tr></thead>
+      <tbody>
+        <tr><td><code>initializing == true</code> (during super constructor)</td><td><code>super.addImpl()</code> — the client panel itself is added here</td></tr>
+        <tr><td><code>comp.getName().equals("EchelonTitleBar")</code></td><td><code>super.addImpl(comp, BorderLayout.NORTH, index)</code> — pins the bar to the outer panel's NORTH</td></tr>
+        <tr><td>Everything else</td><td><code>client.add(comp, constraints)</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="set-layout">
+    <h2>setLayout()</h2>
+    <p>After initialization, <code>setLayout(LayoutManager)</code> applies the new layout to the <strong>client panel</strong>, not to the outer pane. This means module code that sets a custom layout manager on the frame's content pane only affects the client area — the outer <code>BorderLayout</code> (which holds the title bar in <code>NORTH</code>) is never touched.</p>
+    <div class="callout callout-danger">
+      <strong>During construction</strong>
+      While <code>initializing == true</code>, <code>setLayout()</code> falls through to <code>super.setLayout()</code>. This is required because <code>JPanel</code>'s own constructor calls <code>setLayout()</code> internally before our field assignments complete.
+    </div>
+  </section>
+
+  <section id="remove">
+    <h2>remove() / removeAll()</h2>
+    <p><code>remove(Component)</code> checks which panel the component's parent is — if it belongs to the client, it's removed from the client; otherwise <code>super.remove()</code> is called. This correctly handles title bar removal (which should never happen in normal use) without breaking module cleanup code that calls <code>removeAll()</code>.</p>
+    <p><code>removeAll()</code> only clears the client panel — the title bar in <code>NORTH</code> of the outer pane survives. Modules that rebuild their UI via <code>removeAll()</code> will not accidentally destroy the chrome.</p>
+  </section>
+
+  <section id="initializing-guard">
+    <h2>Initializing Guard</h2>
+    <p>The <code>boolean initializing</code> field is the key to correctness. It is set to <code>true</code> at the start of the constructor body and back to <code>false</code> only after the client panel is fully wired. During this window, every overridden method delegates straight to <code>super</code>, which is necessary because <code>JPanel</code>'s superclass chain calls <code>setLayout</code> and potentially <code>addImpl</code> during its own construction — before our fields have been assigned.</p>
+<pre data-lang="Java"><code><span class="kw">public</span> <span class="ty">ChromeContentPane</span>(<span class="ty">JFrame</span> owner) {
+    <span class="kw">super</span>(<span class="kw">new</span> <span class="ty">BorderLayout</span>());  <span class="cm">// may call setLayout/addImpl</span>
+    initializing = <span class="kw">true</span>;         <span class="cm">// guard is ON</span>
+
+    client = <span class="kw">new</span> <span class="ty">JPanel</span>(<span class="kw">new</span> <span class="ty">BorderLayout</span>());
+    <span class="kw">super</span>.<span class="fn">add</span>(client, <span class="ty">BorderLayout</span>.CENTER);
+
+    initializing = <span class="kw">false</span>;        <span class="cm">// guard is OFF — all future calls route to client</span>
+}</code></pre>
+  </section>
+
+  <section id="client-panel">
+    <h2>clientPanel()</h2>
+    <p>Package-private accessor that returns the inner client <code>JPanel</code> directly. Intended for use by <code>WindowFactory</code> and other chrome utilities that need to bypass the interception layer. Should not be used by module code.</p>
+    <div class="callout callout-warn">
+      <strong>Direct client access</strong>
+      Using <code>clientPanel()</code> bypasses all routing logic. Components added directly to the client will not be tracked by the outer pane's remove/layout overrides. Only use this when you explicitly need to target the client layer from chrome infrastructure code.
+    </div>
+  </section>
+
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EchelonChromeBridge — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2}
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:.15em .55em;color:var(--accent);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2)}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--accent)}
+  nav a.inner{font-size:.78rem;padding-left:1.5rem;color:#5a6080}
+  nav a.inner::before{content:'↳';font-size:.7rem;color:var(--border)}
+  nav a.inner:hover{color:#8b92b8;border-left-color:var(--accent2)}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:660px}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .callout-danger{background:rgba(239,68,68,.08);border-color:var(--danger);color:#fca5a5}
+  .data-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .data-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .data-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .data-table tr:last-child td{border-bottom:none}
+  .data-table tr:hover td{background:var(--surface2)}
+  .flow{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.75rem;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.83rem}
+  .flow-step{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.2rem;position:relative}
+  .flow-step:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;width:1px;height:calc(100% - 6px);background:var(--border)}
+  .flow-num{flex-shrink:0;width:27px;height:27px;border-radius:50%;background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.4);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;z-index:1}
+  .flow-content{padding-top:3px;line-height:1.65;color:var(--text)}
+  .flow-content strong{color:#fff;font-weight:600}
+  aside::-webkit-scrollbar{width:4px}
+  aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr};aside{position:relative;height:auto};main{padding:2rem 1.5rem};h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">triton.ui</div>
+    <div class="sidebar-classname">EchelonChromeBridge</div>
+    <span class="sidebar-kind">public final class</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+    <a href="#install-once">installOnce()</a>
+    <span class="nav-section">Decoration</span>
+    <a href="#try-decorate">tryDecorate()</a>
+    <a href="#already-chromed">Double-decoration guard</a>
+    <a href="#chrome-path">Chrome path selection</a>
+    <span class="nav-section">Fallbacks</span>
+    <a href="#fallback-chrome">Fallback chrome</a>
+    <a href="#safe-invoke">safeInvoke()</a>
+  </nav>
+</aside>
+<main>
+
+  <div class="hero" id="overview">
+    <div class="hero-badge">triton.ui</div>
+    <h1>EchelonChromeBridge</h1>
+    <div class="hero-meta">
+      <span>Package <code>triton.ui</code></span>
+      <span>Visibility <code>public final class</code></span>
+    </div>
+    <p class="hero-desc">Auto-applies Triton chrome to any <code>JFrame</code> opened at runtime, covering legacy modules that bypass <code>WindowFactory</code> or <code>EchelonFrame</code>. Safe to install multiple times via double-checked locking. Never double-decorates windows, and degrades gracefully when <code>WindowFactory</code> or FlatLaf are unavailable.</p>
+  </div>
+
+  <section id="install-once">
+    <h2>installOnce()</h2>
+    <p>The entry point. Uses double-checked locking on a <code>volatile boolean INSTALLED</code> flag — safe to call from any thread, any number of times. On first call it:</p>
+    <ol style="padding-left:1.5rem;font-family:'DM Mono',monospace;font-size:.9rem;color:var(--text);line-height:2.2">
+      <li>Reflectively disables FlatLaf native window decorations (no hard compile dependency on FlatLaf).</li>
+      <li>Registers a global <code>AWTEventListener</code> for <code>WINDOW_EVENT_MASK</code>.</li>
+      <li>Sets <code>INSTALLED = true</code>.</li>
+    </ol>
+<pre data-lang="Java"><code><span class="cm">// Call early, e.g. from your module loader bootstrap</span>
+<span class="ty">EchelonChromeBridge</span>.<span class="fn">installOnce</span>();</code></pre>
+    <div class="callout callout-info">
+      <strong>Recommended call site</strong>
+      Call from <code>CentralModuleOpener</code> or your application entry point before any modules are loaded. The bridge handles all subsequently opened frames automatically.
+    </div>
+  </section>
+
+  <section id="try-decorate">
+    <h2>tryDecorate()</h2>
+    <p>The public decoration method — also called internally from the AWT event listener. Can be called manually on any <code>JFrame</code> that needs chrome applied outside of the automatic listener flow.</p>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-content">Check <code>"echelon.skipCustomTitleBar"</code> client property → if <code>true</code>, return immediately.</div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-content">Call <code>isAlreadyChromed()</code> → if already decorated, return.</div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-content">Route to <code>safeApplyCustomChrome()</code> (if undecorated) or <code>safeApplyFlatlafTitleBar()</code> (if decorated).</div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-content">Best-effort register with <code>EchelonWindowPlacer</code> and <code>OnTopController</code> via reflection.</div></div>
+      <div class="flow-step"><div class="flow-num">5</div><div class="flow-content">Mark root pane with <code>"echelon.chromed" = true</code>.</div></div>
+    </div>
+  </section>
+
+  <section id="already-chromed">
+    <h2>Double-Decoration Guard</h2>
+    <p><code>isAlreadyChromed(JFrame)</code> checks three signals in order — any one returning true short-circuits decoration:</p>
+    <table class="data-table">
+      <thead><tr><th>Check</th><th>Indicates</th></tr></thead>
+      <tbody>
+        <tr><td><code>rp.getClientProperty("echelon.chromed") == TRUE</code></td><td>Previously processed by any Triton chrome path.</td></tr>
+        <tr><td>Content pane has a <code>NORTH</code> component named <code>"EchelonTitleBar"</code></td><td>Already has <code>WindowFactory</code>-style chrome.</td></tr>
+        <tr><td><code>rp.getClientProperty("JRootPane.titleBarComponent") instanceof JComponent</code></td><td>Already has FlatLaf-style (<code>CustomTitleBars</code>) chrome.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="chrome-path">
+    <h2>Chrome Path Selection</h2>
+    <table class="data-table">
+      <thead><tr><th>Frame state</th><th>Path taken</th></tr></thead>
+      <tbody>
+        <tr><td><code>frame.isUndecorated() == true</code></td><td><code>safeApplyCustomChrome()</code> → <code>WindowFactory.applyCustomChrome()</code></td></tr>
+        <tr><td><code>frame.isUndecorated() == false</code></td><td><code>safeApplyFlatlafTitleBar()</code> → <code>CustomTitleBars.decorateFrame()</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="fallback-chrome">
+    <h2>Fallback Chrome</h2>
+    <p>If <code>WindowFactory.applyCustomChrome()</code> throws (e.g., <code>WindowFactory</code> is absent from the classpath in a stripped build), a minimal emergency title bar is injected directly:</p>
+    <ul style="padding-left:1.5rem;font-family:'DM Mono',monospace;font-size:.9rem;color:var(--text);line-height:2">
+      <li>A <code>JPanel</code> named <code>"EchelonTitleBar"</code> with a centered <code>JLabel</code> showing the frame title.</li>
+      <li>A <code>MouseAdapter</code> for drag and double-click maximize.</li>
+      <li>The existing content pane is wrapped inside a new <code>BorderLayout</code> panel with the bar in <code>NORTH</code>.</li>
+      <li><code>WindowFactory.installPanicUnstick()</code> is attempted (best-effort).</li>
+    </ul>
+    <div class="callout callout-warn">
+      <strong>Fallback limitations</strong>
+      The emergency bar has no traffic-light buttons, no resizer, and no Move-to-Screen. It is purely a drag handle and identity marker. It should never appear in a complete Triton build.
+    </div>
+    <p>The FlatLaf path (<code>safeApplyFlatlafTitleBar</code>) has no inner fallback — if <code>CustomTitleBars.decorateFrame()</code> throws, native decorations are kept silently.</p>
+  </section>
+
+  <section id="safe-invoke">
+    <h2>safeInvoke()</h2>
+    <p>A private reflective helper used to call <code>EchelonWindowPlacer.manage()</code> and <code>OnTopController.bindAboveDesktopOnly()</code> without a compile-time dependency. If either class or method is absent, the call is silently swallowed. This allows the bridge to be included in builds where these utilities haven't been ported yet.</p>
+<pre data-lang="Java"><code><span class="cm">// Equivalent of: EchelonWindowPlacer.manage(f)</span>
+<span class="fn">safeInvoke</span>(
+    <span class="str">"triton.ui.EchelonWindowPlacer"</span>,
+    <span class="str">"manage"</span>,
+    <span class="kw">new</span> <span class="ty">Class</span>&lt;?&gt;[]{<span class="ty">Window</span>.<span class="kw">class</span>},
+    f
+);</code></pre>
+  </section>
+
+</main>
+</div>
+</body>
+</html>
