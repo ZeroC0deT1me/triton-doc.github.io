@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EchelonFrame — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem;letter-spacing:.04em}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2;word-break:break-all}
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:4px;padding:.15em .55em}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;font-weight:400;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--accent)}
+  nav a.inner{font-size:.78rem;padding-left:1.5rem;color:#5a6080}
+  nav a.inner::before{content:'↳';font-size:.7rem;color:var(--border);margin-right:.25rem}
+  nav a.inner:hover{color:#8b92b8;border-left-color:var(--accent2)}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:660px}
+  .class-divider{display:flex;align-items:center;gap:1rem;margin:4.5rem 0 2.5rem;padding-top:3.5rem;border-top:1px solid var(--border)}
+  .class-divider-badge{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.25em .7em;border-radius:4px;white-space:nowrap;flex-shrink:0;background:rgba(167,139,250,.12);color:var(--accent2);border:1px solid rgba(167,139,250,.25)}
+  .class-divider h2{font-size:1.5rem;font-weight:800;color:#fff;margin:0}
+  .class-divider h2::after{display:none}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}.num{color:#f9a8d4}.fn{color:#7dd3fc}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .callout-danger{background:rgba(239,68,68,.08);border-color:var(--danger);color:#fca5a5}
+  .data-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .data-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .data-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .data-table tr:last-child td{border-bottom:none}
+  .data-table tr:hover td{background:var(--surface2)}
+  .flow{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.75rem;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.83rem}
+  .flow-step{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.2rem;position:relative}
+  .flow-step:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;width:1px;height:calc(100% - 6px);background:var(--border)}
+  .flow-num{flex-shrink:0;width:27px;height:27px;border-radius:50%;background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.4);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;z-index:1}
+  .flow-content{padding-top:3px;line-height:1.65;color:var(--text)}
+  .flow-content strong{color:#fff;font-weight:600}
+  aside::-webkit-scrollbar{width:4px}
+  aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr}aside{position:relative;height:auto}main{padding:2rem 1.5rem}h1{font-size:1.9rem}}</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">triton.ui</div>
+    <div class="sidebar-classname">EchelonFrame</div>
+    <span class="sidebar-kind">public class</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+
+    <span class="nav-section">Constructor</span>
+    <a href="#constructor">Constructor flow</a>
+    <a href="#stay-above">Stay-above-desktop</a>
+    <a href="#add-notify">addNotify() — placement</a>
+
+    <span class="nav-section">Animation</span>
+    <a href="#anim-api">setPendingAnimation()</a>
+    <a href="#anim-flow">How it runs</a>
+    <a href="#anim-types">Types</a>
+
+    <span class="nav-section">Bounds</span>
+    <a href="#bounds">usableBounds() &amp; clamping</a>
+
+    <span class="nav-section">Inner Classes</span>
+    <a href="#pending-anim">PendingAnimation</a>
+    <a class="inner" href="#pending-fields">Fields &amp; expiry</a>
+  </nav>
+</aside>
+<main>
+  <div class="hero" id="overview">
+    <div class="hero-badge">triton.ui</div>
+    <h1>EchelonFrame</h1>
+    <div class="hero-meta">
+      <span>Package <code>triton.ui</code></span>
+      <span>Extends <code>JFrame</code></span>
+      <span>Inner <code>PendingAnimation</code></span>
+    </div>
+    <p class="hero-desc">Base <code>JFrame</code> for all Triton windows. Always undecorated with <code>WindowFactory</code> chrome, enrolled with <code>EchelonWindowPlacer</code> for smart screen placement, floats above the desktop while the app is active, and supports window-open animations via a thread-safe queue so rapid back-to-back module launches each get their own animation.</p>
+  </div>
+
+  <section id="constructor">
+    <h2>Constructor Flow</h2>
+    <p>Every step runs in <code>EchelonFrame(String title)</code> in strict order:</p>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>setUndecorated(true)</strong> — removes OS chrome before any peer is created.</div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>WindowFactory.applyCustomChrome(this)</strong> — installs <code>ChromeContentPane</code>, title bar, 8-px resizer, and panic-unstick keybinding.</div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>EchelonWindowPlacer.manage(this)</strong> — enrols the frame for smart placement on first show.</div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>OnTopController.bindAboveDesktopOnly(this)</strong> — floats above the desktop layer while the app is active. Skipped if disabled globally or per-window.</div></div>
+      <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>WindowListener (windowOpened)</strong> — runs <code>ensureInsideUsableBounds()</code> then <code>applyPendingAnimation()</code>. A second listener calls <code>AppWindowController.makeAppWindow()</code>.</div></div>
+    </div>
+
+<pre data-lang="Java"><code><span class="ty">EchelonFrame</span> f = <span class="kw">new</span> <span class="ty">EchelonFrame</span>(<span class="str">"My Module"</span>);
+f.setSize(<span class="num">800</span>, <span class="num">600</span>);
+f.setVisible(<span class="kw">true</span>);</code></pre>
+  </section>
+
+  <section id="stay-above">
+    <h2>Stay-Above-Desktop</h2>
+    <p>Enabled by default via <code>OnTopController.bindAboveDesktopOnly()</code>. The frame floats above the desktop but yields when another app is focused.</p>
+    <p>Disabled at two levels via <code>shouldStayAboveDesktopByDefault()</code>:</p>
+    <table class="data-table">
+      <thead><tr><th>Scope</th><th>Mechanism</th></tr></thead>
+      <tbody>
+        <tr><td>System-wide</td><td>JVM flag <code>-Dechelon.stayAboveDesktop=false</code></td></tr>
+        <tr><td>Per-window</td><td>Root pane client property <code>"echelon.stayAboveDesktop" = Boolean.FALSE</code> set before the constructor</td></tr>
+      </tbody>
+    </table>
+    <p>The fluent method <code>stayAboveDesktop()</code> re-applies the binding explicitly and returns <code>this</code> for chaining.</p>
+  </section>
+
+  <section id="add-notify">
+    <h2>addNotify() — Hard Device Placement</h2>
+    <p><code>addNotify()</code> is overridden to consume a specific <code>GraphicsDevice</code> queued by <code>EchelonWindowPlacer.consumeNextHardDevice()</code>. If one is present, the frame is centered on that screen's usable area before it appears. A follow-up pass is posted on the EDT to re-clamp after the OS may have shifted the window.</p>
+    <div class="callout callout-info">
+      <strong>Skipping post-show re-center</strong>
+      Set root pane client property <code>"echelon.skipPostShowRecenter" = Boolean.TRUE</code> to skip the EDT correction pass — useful when an animation is controlling initial position.
+    </div>
+  </section>
+
+  <section id="anim-api">
+    <h2>setPendingAnimation()</h2>
+    <p>Static method. Call immediately before the module opens its frame. Enqueues a <code>PendingAnimation</code> into <code>ConcurrentLinkedQueue</code>. Multiple rapid calls each enqueue independently.</p>
+<pre data-lang="Java"><code><span class="cm">// Call this right before triggering the module open</span>
+<span class="ty">EchelonFrame</span>.<span class="fn">setPendingAnimation</span>(<span class="str">"zoom-reveal"</span>, clickedButton);
+<span class="cm">// The next EchelonFrame that fires windowOpened will consume this entry</span></code></pre>
+  </section>
+
+  <section id="anim-flow">
+    <h2>How Animations Run</h2>
+    <p><code>applyPendingAnimation()</code> is called from <code>windowOpened</code>:</p>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-content">Drain any expired entries from the head of the queue (entries older than <strong>5 000 ms</strong>).</div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-content">Poll the next valid <code>PendingAnimation</code>. If queue is empty → return, no animation.</div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-content">Second expiry check on the polled entry. If stale → skip.</div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><code>SwingUtilities.invokeLater</code> — set opacity to <code>0.0f</code>, call the animation delegate.</div></div>
+    </div>
+  </section>
+
+  <section id="anim-types">
+    <h2>Animation Types</h2>
+    <table class="data-table">
+      <thead><tr><th>Type string</th><th>Delegate</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>"zoom-reveal"</code></td><td><code>ZoomRevealAnimation.animateWindowOpen(frame, source)</code></td><td>Window grows out from the source button's screen position.</td></tr>
+        <tr><td><code>"fade"</code></td><td><code>FadeInAnimation.animateWindowOpen(frame)</code></td><td>Window fades in from opacity 0.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout callout-warn">
+      <strong>Opacity responsibility</strong>
+      The frame is set to <code>0.0f</code> opacity before the delegate runs. The delegate must restore it to <code>1.0f</code> on completion — if the delegate throws or never runs, the frame stays invisible.
+    </div>
+  </section>
+
+  <section id="bounds">
+    <h2>usableBounds() &amp; Clamping</h2>
+    <p>Static helper <code>usableBounds(GraphicsDevice)</code> returns a screen's usable rectangle — raw bounds minus system insets (<code>Toolkit.getScreenInsets()</code>), with a minimum of 1×1.</p>
+    <p><code>ensureInsideUsableBounds()</code> runs on <code>windowOpened</code> and clamps the frame's top-left corner so the window stays fully on screen, accounting for taskbars and dock areas.</p>
+  </section>
+
+  <!-- ── Inner class ── -->
+  <div class="class-divider" id="pending-anim">
+    <span class="class-divider-badge">private static inner class</span>
+    <h2>PendingAnimation</h2>
+  </div>
+
+  <section id="pending-fields">
+    <h2>Fields &amp; Expiry</h2>
+    <p>Immutable value object stored in the static <code>ConcurrentLinkedQueue</code>. Consumed FIFO — each new <code>EchelonFrame</code> drains exactly one entry.</p>
+<pre data-lang="Java"><code><span class="kw">private static class</span> <span class="ty">PendingAnimation</span> {
+    <span class="kw">final</span> <span class="ty">String</span>    type;       <span class="cm">// "zoom-reveal" | "fade"</span>
+    <span class="kw">final</span> <span class="ty">Component</span> source;     <span class="cm">// button that triggered the open (zoom origin)</span>
+    <span class="kw">final</span> <span class="kw">long</span>      timestamp;  <span class="cm">// System.currentTimeMillis() at creation</span>
+
+    <span class="kw">boolean</span> <span class="fn">isExpired</span>() {
+        <span class="kw">return</span> (System.<span class="fn">currentTimeMillis</span>() - timestamp) > <span class="num">5000</span>;
+    }
+}</code></pre>
+    <p>The 5-second TTL ensures that if a module fails to open within that window, its animation entry is silently discarded rather than applied to a later unrelated frame.</p>
+  </section>
+</main>
+</div>
+</body>
+</html>

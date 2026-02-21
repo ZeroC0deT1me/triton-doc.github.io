@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>WindowFactory — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2}
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:4px;padding:.15em .55em}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;font-weight:400;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--accent)}
+  nav a.inner{font-size:.78rem;padding-left:1.5rem;color:#5a6080}
+  nav a.inner::before{content:'↳';font-size:.7rem;color:var(--border);margin-right:.25rem}
+  nav a.inner:hover{color:#8b92b8;border-left-color:var(--accent2)}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:660px}
+  .class-divider{display:flex;align-items:center;gap:1rem;margin:4.5rem 0 2.5rem;padding-top:3.5rem;border-top:1px solid var(--border)}
+  .class-divider-badge{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.25em .7em;border-radius:4px;white-space:nowrap;flex-shrink:0;background:rgba(167,139,250,.12);color:var(--accent2);border:1px solid rgba(167,139,250,.25)}
+  .class-divider h2{font-size:1.5rem;font-weight:800;color:#fff;margin:0}.class-divider h2::after{display:none}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}.num{color:#f9a8d4}.fn{color:#7dd3fc}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .callout-danger{background:rgba(239,68,68,.08);border-color:var(--danger);color:#fca5a5}
+  .data-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .data-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .data-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .data-table tr:last-child td{border-bottom:none}.data-table tr:hover td{background:var(--surface2)}
+  .dot-row{display:flex;align-items:center;gap:1rem;margin-bottom:.8rem}
+  .dot{width:18px;height:18px;border-radius:50%;flex-shrink:0}
+  .dot-label{font-family:'DM Mono',monospace;font-size:.84rem;color:var(--text)}
+  .flow{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.75rem;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.83rem}
+  .flow-step{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.2rem;position:relative}
+  .flow-step:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;width:1px;height:calc(100% - 6px);background:var(--border)}
+  .flow-num{flex-shrink:0;width:27px;height:27px;border-radius:50%;background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.4);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;z-index:1}
+  .flow-content{padding-top:3px;line-height:1.65;color:var(--text)}.flow-content strong{color:#fff;font-weight:600}
+  aside::-webkit-scrollbar{width:4px}aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr}aside{position:relative;height:auto}main{padding:2rem 1.5rem}h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">triton.ui</div>
+    <div class="sidebar-classname">WindowFactory</div>
+    <span class="sidebar-kind">public final class</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+
+    <span class="nav-section">Factory</span>
+    <a href="#create">create()</a>
+    <a href="#apply-chrome">applyCustomChrome()</a>
+
+    <span class="nav-section">Title Bar</span>
+    <a href="#title-bar">buildTitleBar()</a>
+    <a href="#traffic-lights">Traffic lights</a>
+    <a href="#right-box">Right box slot</a>
+    <a href="#drag-double-click">Drag &amp; double-click</a>
+
+    <span class="nav-section">Resizer</span>
+    <a href="#resizer">installResizer()</a>
+    <a href="#hit-enum">Hit enum</a>
+
+    <span class="nav-section">Dialogs</span>
+    <a href="#dialog-chrome">applyDialogChrome()</a>
+
+    <span class="nav-section">Utilities</span>
+    <a href="#panic-unstick">installPanicUnstick()</a>
+    <a href="#move-to-screen">showMoveToScreenDialog()</a>
+    <a href="#anim-queue">Animation queue</a>
+
+    <span class="nav-section">Inner Classes</span>
+    <a href="#pending-anim-data">PendingAnimationData</a>
+    <a class="inner" href="#pending-anim-fields">Fields &amp; expiry</a>
+    <a href="#hit-detail">Hit (private enum)</a>
+    <a class="inner" href="#hit-values">Values &amp; cursors</a>
+  </nav>
+</aside>
+<main>
+  <div class="hero" id="overview">
+    <div class="hero-badge">triton.ui</div>
+    <h1>WindowFactory</h1>
+    <div class="hero-meta">
+      <span>Package <code>triton.ui</code></span>
+      <span>Modifier <code>public final</code> — non-instantiable</span>
+      <span>Inner <code>PendingAnimationData</code> · <code>Hit</code></span>
+    </div>
+    <p class="hero-desc">All-static factory for custom Swing window chrome. Builds a macOS-style traffic-light title bar (red/yellow/green + purple Move-to-Screen), installs an 8-px edge-and-corner resizer via a global <code>AWTEventListener</code>, manages a per-class animation queue, and provides lightweight dialog chrome helpers.</p>
+  </div>
+
+  <section id="create">
+    <h2>create()</h2>
+    <p>Primary factory entry point. Creates an undecorated <code>JFrame</code>, applies chrome, enrolls with <code>EchelonWindowPlacer</code>, binds float-above-desktop, and — if an animation is pending — sets opacity to <code>0.0f</code> and wires a <code>WindowAdapter</code> that fires the animation 100 ms after <code>windowOpened</code> (to let the placer settle first).</p>
+<pre data-lang="Java"><code><span class="cm">// Basic</span>
+<span class="ty">JFrame</span> f = <span class="ty">WindowFactory</span>.<span class="fn">create</span>(<span class="str">"My Window"</span>);
+f.setSize(<span class="num">800</span>, <span class="num">600</span>);
+f.setVisible(<span class="kw">true</span>);
+
+<span class="cm">// With animation — call setPendingAnimation first</span>
+<span class="ty">WindowFactory</span>.<span class="fn">setPendingAnimation</span>(<span class="str">"zoom-reveal"</span>, sourceButton);
+<span class="ty">JFrame</span> f = <span class="ty">WindowFactory</span>.<span class="fn">create</span>(<span class="str">"My Window"</span>);</code></pre>
+    <div class="callout callout-info">
+      <strong>Backward-compatible overload</strong>
+      <code>create(String title, boolean unusedCustomEverywhere)</code> accepts but ignores the boolean — it exists for call sites that passed a flag before the factory was simplified.
+    </div>
+    <p>Float-above-desktop is enabled by default. It can be suppressed:</p>
+    <table class="data-table">
+      <thead><tr><th>Scope</th><th>Mechanism</th></tr></thead>
+      <tbody>
+        <tr><td>System-wide</td><td>JVM property <code>echelon.floatAboveDesktopOnly=false</code></td></tr>
+        <tr><td>Per-window</td><td>Root pane client property <code>"echelon.floatAboveDesktopOnly" = Boolean.FALSE</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="apply-chrome">
+    <h2>applyCustomChrome()</h2>
+    <p>Can be called on any pre-existing undecorated <code>JFrame</code> to retrofit Triton chrome. Forces <code>setUndecorated(true)</code> if needed, replaces the content pane with a new <code>ChromeContentPane</code>, adds the title bar to <code>NORTH</code>, installs the resizer and panic-unstick, then marks the root pane with <code>"echelon.chromed" = Boolean.TRUE</code> to prevent double-wrapping.</p>
+  </section>
+
+  <section id="title-bar">
+    <h2>buildTitleBar()</h2>
+    <p>Private method that returns a <code>JPanel</code> named <code>"EchelonTitleBar"</code> — this name is how <code>ChromeContentPane</code> and <code>EchelonChromeBridge</code> detect existing chrome. Layout is <code>BorderLayout</code>:</p>
+    <table class="data-table">
+      <thead><tr><th>Region</th><th>Content</th></tr></thead>
+      <tbody>
+        <tr><td><code>WEST</code></td><td>Traffic-light dots panel (red, yellow, green, purple)</td></tr>
+        <tr><td><code>CENTER</code></td><td>Right-aligned bold title <code>JLabel</code>, live-updated via frame's <code>propertyChangeListener("title")</code></td></tr>
+        <tr><td><code>EAST</code></td><td>Reserved <code>JPanel</code> tagged <code>"echelon.titlebar.rightBox"=true</code> for module extras</td></tr>
+      </tbody>
+    </table>
+    <p>Background color comes from <code>UIManager.getColor("Panel.background")</code> with a <code>null</code> fallback to <code>#F2F2F2</code>.</p>
+  </section>
+
+  <section id="traffic-lights">
+    <h2>Traffic Lights</h2>
+    <p>Four 14×14 opaque circular buttons, created by the private <code>macDot(JFrame, Color, ActionListener)</code> helper:</p>
+    <div class="dot-row"><div class="dot" style="background:#FF5F57"></div><span class="dot-label"><strong style="color:#fff">Red <code>#FF5F57</code></strong> — dispatches <code>WINDOW_CLOSING</code> event</span></div>
+    <div class="dot-row"><div class="dot" style="background:#FEBC2E"></div><span class="dot-label"><strong style="color:#fff">Yellow <code>#FEBC2E</code></strong> — calls <code>frame.setState(Frame.ICONIFIED)</code></span></div>
+    <div class="dot-row"><div class="dot" style="background:#28C840"></div><span class="dot-label"><strong style="color:#fff">Green <code>#28C840</code></strong> — calls private <code>toggleMax()</code></span></div>
+    <div class="dot-row"><div class="dot" style="background:#B388FF"></div><span class="dot-label"><strong style="color:#fff">Purple <code>#B388FF</code></strong> — calls <code>showMoveToScreenDialog(frame)</code>; tooltip "Move to Screen"</span></div>
+  </section>
+
+  <section id="right-box">
+    <h2>Right Box Slot</h2>
+    <p>An empty <code>FlowLayout(TRAILING)</code> panel in <code>BorderLayout.EAST</code> of the title bar, tagged with client property <code>"echelon.titlebar.rightBox" = Boolean.TRUE</code>. Modules can retrieve and populate it to add toolbar buttons inside the title bar without touching chrome internals.</p>
+  </section>
+
+  <section id="drag-double-click">
+    <h2>Drag &amp; Double-Click</h2>
+    <p>A shared <code>MouseAdapter</code> is added to both the bar panel and the title label. On <code>mousePressed</code> it records the offset of the cursor from the frame's top-left corner. On <code>mouseDragged</code> it moves the frame. On double-click (<code>BUTTON1</code>, count 2) it calls <code>toggleMax()</code>.</p>
+    <div class="callout callout-warn">
+      <strong>Cursor interference fix</strong>
+      The bar itself does NOT set <code>MOVE_CURSOR</code> on itself (this was removed). Setting a cursor on the bar would override the resizer's edge cursors when the mouse is near the top border.
+    </div>
+  </section>
+
+  <section id="resizer">
+    <h2>installResizer()</h2>
+    <p>Registers a global <code>AWTEventListener</code> on <code>MOUSE_EVENT_MASK | MOUSE_MOTION_EVENT_MASK</code>. The listener is scoped to a specific frame by checking <code>SwingUtilities.getWindowAncestor(src) == f</code> and is unregistered on <code>windowClosed</code>.</p>
+    <table class="data-table">
+      <thead><tr><th>Property</th><th>Value / notes</th></tr></thead>
+      <tbody>
+        <tr><td>Hit border</td><td><strong>8 px</strong> from each edge (increased from 6 for easier grabbing)</td></tr>
+        <tr><td>Minimum size</td><td><strong>480 × 320 px</strong>, or the frame's own minimum if larger</td></tr>
+        <tr><td>Cursor target</td><td>Set on both <code>JFrame</code> and <code>JRootPane</code> for reliable visibility across LAFs</td></tr>
+        <tr><td>Disabled states</td><td>Maximized (<code>MAXIMIZED_BOTH</code>), deactivated (<code>windowDeactivated</code>), state changed (<code>windowStateListener</code>)</td></tr>
+        <tr><td>Session state</td><td>Private inner class <code>Session</code> holds <code>Hit</code>, anchor point, and start bounds — reset on release or deactivation</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="dialog-chrome">
+    <h2>applyDialogChrome()</h2>
+    <p>Minimal chrome for <code>JDialog</code>. Injects a title bar with a single red close dot (<code>→ dlg.dispose()</code>), a centered bold title label, and a drag adapter. Wraps the existing content pane in a new <code>JPanel</code> rather than replacing it. No resizer is installed on dialogs.</p>
+  </section>
+
+  <section id="panic-unstick">
+    <h2>installPanicUnstick()</h2>
+    <p>Binds <kbd>ESC</kbd> (in <code>WHEN_IN_FOCUSED_WINDOW</code> scope) to an action that iterates all open <code>Window</code> instances, resets their cursors to default, hides and clears all glass panes via <code>makeGlassPaneSafe()</code>, and clears global keyboard focus. Recovers the UI from any stuck drag or resize state.</p>
+<pre data-lang="Java"><code><span class="cm">// makeGlassPaneSafe — also public for external callers</span>
+<span class="ty">WindowFactory</span>.<span class="fn">makeGlassPaneSafe</span>(frame); <span class="cm">// hides glass pane, clears children</span></code></pre>
+  </section>
+
+  <section id="move-to-screen">
+    <h2>showMoveToScreenDialog()</h2>
+    <p>Tries <code>EnhancedMoveToScreenPanel.show(frame)</code> first (carousel UI with snap grid). On any failure falls back to a plain <code>JOptionPane.showInputDialog</code> listing each screen as <code>"Screen N (WxH @ x,y)"</code>. After selection, <code>moveFrameToBounds()</code> centers the frame on the target rectangle and calls <code>EchelonWindowPlacer.manage(frame)</code> again.</p>
+  </section>
+
+  <section id="anim-queue">
+    <h2>Animation Queue</h2>
+    <p>Static <code>ConcurrentLinkedQueue&lt;PendingAnimationData&gt;</code>. Call <code>setPendingAnimation(type, source)</code> immediately before <code>create()</code>. Expired entries (older than 5 s) are drained from the head on each <code>create()</code> call before polling the next valid entry.</p>
+<pre data-lang="Java"><code><span class="ty">WindowFactory</span>.<span class="fn">setPendingAnimation</span>(<span class="str">"zoom-reveal"</span>, clickedButton);
+<span class="ty">JFrame</span> f = <span class="ty">WindowFactory</span>.<span class="fn">create</span>(<span class="str">"Module"</span>);
+f.setVisible(<span class="kw">true</span>); <span class="cm">// animation fires ~100ms after windowOpened</span></code></pre>
+  </section>
+
+  <!-- ── Inner: PendingAnimationData ── -->
+  <div class="class-divider" id="pending-anim-data">
+    <span class="class-divider-badge">private static inner class</span>
+    <h2>PendingAnimationData</h2>
+  </div>
+  <section id="pending-anim-fields">
+    <h2>Fields &amp; Expiry</h2>
+    <p>Mirrors <code>EchelonFrame.PendingAnimation</code> — same structure, separate queue, separate consumer (<code>create()</code> vs <code>windowOpened</code>).</p>
+<pre data-lang="Java"><code><span class="kw">private static class</span> <span class="ty">PendingAnimationData</span> {
+    <span class="kw">final</span> <span class="ty">String</span>    type;       <span class="cm">// "zoom-reveal" | "fade" | "none"</span>
+    <span class="kw">final</span> <span class="ty">Component</span> source;     <span class="cm">// button origin for zoom</span>
+    <span class="kw">final</span> <span class="kw">long</span>      timestamp;
+
+    <span class="kw">boolean</span> <span class="fn">isExpired</span>() {
+        <span class="kw">return</span> (System.<span class="fn">currentTimeMillis</span>() - timestamp) > <span class="num">5000</span>;
+    }
+}</code></pre>
+    <div class="callout callout-info">
+      <strong>Type "none"</strong>
+      Passing <code>"none"</code> evaluates to <code>hasAnimation = false</code> in <code>create()</code> — the frame is not hidden and no delegate runs. Use this to consume a queue slot without triggering any effect.
+    </div>
+  </section>
+
+  <!-- ── Inner: Hit enum ── -->
+  <div class="class-divider" id="hit-detail">
+    <span class="class-divider-badge">private enum</span>
+    <h2>Hit</h2>
+  </div>
+  <section id="hit-values">
+    <h2>Values &amp; Cursors</h2>
+    <p>Used by <code>hitTest(Point, JComponent, int)</code> to classify where the cursor is relative to the frame border, and by <code>setCursorFor(JFrame, Hit)</code> to set the system resize cursor.</p>
+    <table class="data-table">
+      <thead><tr><th>Value</th><th>Zone</th><th>Cursor</th></tr></thead>
+      <tbody>
+        <tr><td><code>N</code></td><td>Top edge</td><td><code>N_RESIZE_CURSOR</code></td></tr>
+        <tr><td><code>S</code></td><td>Bottom edge</td><td><code>S_RESIZE_CURSOR</code></td></tr>
+        <tr><td><code>W</code></td><td>Left edge</td><td><code>W_RESIZE_CURSOR</code></td></tr>
+        <tr><td><code>E</code></td><td>Right edge</td><td><code>E_RESIZE_CURSOR</code></td></tr>
+        <tr><td><code>NW</code></td><td>Top-left corner</td><td><code>NW_RESIZE_CURSOR</code></td></tr>
+        <tr><td><code>NE</code></td><td>Top-right corner</td><td><code>NE_RESIZE_CURSOR</code></td></tr>
+        <tr><td><code>SW</code></td><td>Bottom-left corner</td><td><code>SW_RESIZE_CURSOR</code></td></tr>
+        <tr><td><code>SE</code></td><td>Bottom-right corner</td><td><code>SE_RESIZE_CURSOR</code></td></tr>
+        <tr><td><code>NONE</code></td><td>Interior / out of bounds</td><td>Default cursor</td></tr>
+      </tbody>
+    </table>
+    <p>Corner detection takes priority: the 8-px zones on each axis are tested for N+W, N+E, S+W, S+E first, then individual edges, then NONE.</p>
+  </section>
+</main>
+</div>
+</body>
+</html>
