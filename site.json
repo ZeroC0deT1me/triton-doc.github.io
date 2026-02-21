@@ -2,26 +2,131 @@
   "site": {
     "name": "Triton Framework",
     "tagline": "Developer Reference",
-    "description": "Official documentation for the Triton Framework — module loading, class protection, and the Triton desktop runtime.",
+    "description": "Official documentation for the Triton Framework \u2014 module loading, window chrome, class protection, and the Triton desktop runtime.",
     "repo": "https://github.com/your-org/triton",
-    "version": "TRITON-80",
+    "version": "0.1.0",
     "theme": "dark"
   },
   "docs": [
     {
+      "id": "echelon-frame",
+      "title": "EchelonFrame",
+      "package": "triton.ui",
+      "file": "doc/EchelonFrame.html",
+      "description": "Cross-platform base JFrame for all Triton windows. Always undecorated with custom WindowFactory chrome, enrolled with EchelonWindowPlacer, and supports window-open animations (zoom-reveal, fade). Manages a concurrent animation queue so rapid module launches each get their own animation.",
+      "tags": [
+        "ui",
+        "chrome",
+        "animation"
+      ],
+      "innerClasses": [
+        "PendingAnimation"
+      ],
+      "updated": "2026-02-20"
+    },
+    {
+      "id": "window-factory",
+      "title": "WindowFactory",
+      "package": "triton.ui",
+      "file": "doc/WindowFactory.html",
+      "description": "Factory and utility class for custom Swing window chrome. Builds the macOS-style traffic-light title bar with a purple Move-to-Screen button, installs an 8-pixel edge/corner resizer, manages the animation queue, and provides dialog chrome helpers.",
+      "tags": [
+        "ui",
+        "chrome"
+      ],
+      "innerClasses": [
+        "PendingAnimationData",
+        "Hit (enum)"
+      ],
+      "updated": "2026-02-20"
+    },
+    {
+      "id": "custom-title-bars",
+      "title": "CustomTitleBars",
+      "package": "triton.ui",
+      "file": "doc/CustomTitleBars.html",
+      "description": "FlatLaf-based custom title bar installer for JFrames and JDialogs. Installs globally via an AWT event listener and provides FrameTitleBar and DialogTitleBar components with drag, double-click maximize, active/inactive color transitions, and the purple Move-to-Screen button.",
+      "tags": [
+        "ui",
+        "chrome"
+      ],
+      "innerClasses": [
+        "FrameTitleBar",
+        "DialogTitleBar"
+      ],
+      "updated": "2026-02-20"
+    },
+    {
+      "id": "echelon-chrome-bridge",
+      "title": "EchelonChromeBridge",
+      "package": "triton.ui",
+      "file": "doc/EchelonChromeBridge.html",
+      "description": "Auto-applies Triton chrome to any JFrame opened at runtime, covering legacy modules that don't call WindowFactory directly. Uses a global AWT event listener and never double-decorates. Falls back gracefully if WindowFactory or FlatLaf are unavailable.",
+      "tags": [
+        "ui",
+        "chrome"
+      ],
+      "innerClasses": [],
+      "updated": "2026-02-20"
+    },
+    {
+      "id": "chrome-content-pane",
+      "title": "ChromeContentPane",
+      "package": "triton.ui",
+      "file": "doc/ChromeContentPane.html",
+      "description": "Shielded JPanel content pane that preserves the chrome title bar in NORTH and transparently forwards all user add/remove/setLayout calls to an inner client panel. Hardened against early superclass calls during JFrame construction.",
+      "tags": [
+        "ui",
+        "chrome"
+      ],
+      "innerClasses": [],
+      "updated": "2026-02-20"
+    },
+    {
       "id": "central-module-opener",
       "title": "CentralModuleOpener",
+      "package": "triton.desktop.core",
       "file": "doc/CentralModuleOpener.html",
-      "description": "Central dispatch point for opening any loadable item in the Triton desktop. Handles on-the-fly Java compilation, JAR launching, native execution, and graceful fallback. Includes inner classes ModuleData and ModuleFirstClassLoader.",
-      "tags": ["core", "modules", "classloader"],
+      "description": "Central dispatch point for opening any loadable item in the Triton desktop. Handles on-the-fly Java compilation, JAR launching, native execution, and graceful fallback. Inner classes ModuleData and ModuleFirstClassLoader handle data transport and mod-aware class loading respectively.",
+      "tags": [
+        "core",
+        "modules",
+        "classloader"
+      ],
+      "innerClasses": [
+        "ModuleData",
+        "ModuleFirstClassLoader"
+      ],
       "updated": "2026-02-20"
     },
     {
       "id": "mod-protection",
       "title": "ModProtection",
+      "package": "shared",
       "file": "doc/ModProtection.html",
-      "description": "Runtime annotation controlling whether a framework class can be overridden by module mod/ files. Supports ALLOW_MOD (silent), DISALLOW_MOD (blocked), and an implicit default that notifies the user.",
-      "tags": ["core", "annotations", "modules"],
+      "description": "Runtime annotation controlling whether a framework class can be overridden by module mod/ files. Supports ALLOW_MOD (silent override), DISALLOW_MOD (blocked with notification), and an implicit default that permits override but notifies the user.",
+      "tags": [
+        "core",
+        "annotations",
+        "modules"
+      ],
+      "innerClasses": [
+        "Policy (enum)"
+      ],
+      "updated": "2026-02-20"
+    },
+    {
+      "id": "bottom-bar-menu-provider",
+      "title": "BottomBarMenuProvider",
+      "package": "shared",
+      "file": "doc/BottomBarMenuProvider.html",
+      "description": "Optional interface for modules that want a custom right-click context menu on their bottom bar button. Implement buildBottomBarMenu() to return a JPopupMenu with module-specific items. The shell appends default items (Bring to Front, Hide, Pin, Close) automatically after a separator.",
+      "tags": [
+        "ui",
+        "modules",
+        "interface"
+      ],
+      "innerClasses": [],
       "updated": "2026-02-20"
     }
   ]
