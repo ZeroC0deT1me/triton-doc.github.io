@@ -81,17 +81,18 @@
     overflow: hidden;
   }
 
-  /* ── Description popover ── */
-  .desc-popover {
-    position: fixed;
-    z-index: 9999;
-    background: #1a1f30;
-    border: 1px solid rgba(79,142,247,0.35);
+  /* ── Description popover (CSS-only, anchored above/below card) ── */
+  .card { overflow: visible; }   /* allow popover to escape card bounds */
+  .card-popover {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: calc(100% + 10px);   /* default: above card */
+    z-index: 200;
+    background: #181d2e;
+    border: 1px solid rgba(79,142,247,0.4);
     border-radius: 12px;
-    padding: 1.1rem 1.3rem;
-    max-width: 360px;
-    min-width: 220px;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(79,142,247,0.08);
+    padding: 1rem 1.25rem;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(79,142,247,0.06);
     font-family: 'DM Mono', monospace;
     font-size: 0.825rem;
     font-weight: 300;
@@ -99,20 +100,20 @@
     line-height: 1.8;
     pointer-events: none;
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(6px);
     transition: opacity 0.15s ease, transform 0.15s ease;
   }
-  .desc-popover.visible {
+  .card:hover .card-popover {
     opacity: 1;
     transform: translateY(0);
   }
-  .desc-popover-title {
-    font-size: 0.72rem;
+  .card-popover-title {
+    font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--accent);
-    margin-bottom: 0.55rem;
+    margin-bottom: 0.5rem;
   }
 
   /* Inner class pills */
@@ -216,37 +217,42 @@
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const hi = (t,q) => q ? esc(t).replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>') : esc(t);
 
-  // className -> relative file path, built after docs load
+  // className -> file path, built after docs load
   let classLinks = {};
 
   function buildClassLinks(docs) {
     classLinks = {};
-    docs.forEach(d => {
+    docs.forEach(function(d) {
       classLinks[d.title] = d.file;
-      (d.innerClasses || []).forEach(ic => {
-        const name = ic.split(/[\s(]/)[0];
+      (d.innerClasses || []).forEach(function(ic) {
+        var name = ic.split(' ')[0].split('(')[0];
         if (name) classLinks[name] = d.file;
       });
     });
   }
 
-  // Render description: escape -> auto-link known class names -> search-highlight
+  function escapeRegex(s) {
+    return s.replace(/[-.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // escape -> auto-link known class names -> search-highlight
   function linkDesc(rawText, q) {
-    let s = esc(rawText);
-    const names = Object.keys(classLinks).sort((a, b) => b.length - a.length);
-    names.forEach(name => {
-      const safe = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const re = new RegExp('\\b(' + safe + ')\\b(?![^<]*<\\/a>)', 'g');
-      s = s.replace(re, '<a href="' + classLinks[name] + '" class="desc-link">$1</a>');
+    var s = esc(rawText);
+    // longest-first so "ModuleFirstClassLoader" beats "Module"
+    var names = Object.keys(classLinks).sort(function(a,b){ return b.length - a.length; });
+    names.forEach(function(name) {
+      var re = new RegExp('\\b(' + escapeRegex(name) + ')\\b', 'g');
+      var href = classLinks[name];
+      s = s.replace(re, '<a href="' + href + '" class="desc-link">$1</a>');
     });
     if (q) {
-      const qSafe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var qSafe = escapeRegex(q);
       s = s.replace(new RegExp('(' + qSafe + ')(?=[^<>]*(?:<|$))', 'gi'), '<mark>$1</mark>');
     }
     return s;
   }
 
-  let allDocs=[], activeTag='all', searchQuery='';
+    let allDocs=[], activeTag='all', searchQuery='';
 
   async function loadSite() {
     let data;
@@ -313,6 +319,10 @@
       const tags = (doc.tags||[]).map(t=>`<span class="card-tag">${esc(t)}</span>`).join('');
       const inners = (doc.innerClasses||[]).map(ic=>`<span class="inner-pill">${esc(ic)}</span>`).join('');
       card.innerHTML = `
+        <div class="card-popover">
+          <div class="card-popover-title">${esc(doc.title)}</div>
+          ${linkDesc(doc.description||'',q)}
+        </div>
         <div class="card-header">
           <div class="card-icon">${iconFor(doc.tags)}</div>
           <div class="card-title-group">
@@ -332,77 +342,6 @@
   }
 
   const si=document.getElementById('search'), cb=document.getElementById('search-clear');
-  // ── Description popover ──
-  const popover = document.createElement('div');
-  popover.className = 'desc-popover';
-  document.body.appendChild(popover);
-
-  let popoverTimer = null;
-
-  function showPopover(card, fullDesc) {
-    clearTimeout(popoverTimer);
-
-    const title = card.querySelector('.card-title')?.textContent || '';
-    popover.innerHTML = '<div class="desc-popover-title">' + esc(title) + '</div>' + fullDesc;
-
-    // Position: just above or below the card depending on screen space
-    const rect = card.getBoundingClientRect();
-    const popW = 360;
-    const gap = 10;
-
-    // Horizontal: align with card left, clamp to viewport
-    let left = rect.left;
-    if (left + popW > window.innerWidth - 16) left = window.innerWidth - popW - 16;
-    if (left < 16) left = 16;
-
-    // Vertical: prefer above card; fall back to below
-    const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    let top;
-    if (spaceAbove >= 160 || spaceAbove >= spaceBelow) {
-      // Above — position bottom of popover at top of card
-      popover.style.bottom = '';
-      top = rect.top - gap;
-      popover.style.top = '';
-      // We'll use a trick: set top to the final value after we know height
-      popover.style.visibility = 'hidden';
-      popover.style.top = '0px';
-      popover.style.left = left + 'px';
-      popover.classList.add('visible');
-      const ph = popover.offsetHeight;
-      popover.classList.remove('visible');
-      popover.style.visibility = '';
-      top = rect.top - ph - gap;
-      if (top < 8) top = rect.bottom + gap; // flip to below if no room
-    } else {
-      top = rect.bottom + gap;
-    }
-
-    popover.style.top = top + 'px';
-    popover.style.left = left + 'px';
-
-    popoverTimer = setTimeout(() => popover.classList.add('visible'), 80);
-  }
-
-  function hidePopover() {
-    clearTimeout(popoverTimer);
-    popoverTimer = setTimeout(() => popover.classList.remove('visible'), 60);
-  }
-
-  // Attach after render — use event delegation on #grid
-  document.getElementById('grid').addEventListener('mouseover', e => {
-    const card = e.target.closest('.card');
-    if (!card) return;
-    const desc = card.querySelector('.card-desc');
-    if (!desc) return;
-    showPopover(card, desc.innerHTML);
-  });
-
-  document.getElementById('grid').addEventListener('mouseleave', () => hidePopover());
-  document.getElementById('grid').addEventListener('mouseout', e => {
-    if (!e.relatedTarget || !e.relatedTarget.closest('.card')) hidePopover();
-  });
-
     si.addEventListener('input', ()=>{ searchQuery=si.value; cb.classList.toggle('visible',si.value.length>0); render(); });
   cb.addEventListener('click', ()=>{ si.value=''; searchQuery=''; cb.classList.remove('visible'); si.focus(); render(); });
 
