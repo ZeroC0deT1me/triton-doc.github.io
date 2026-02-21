@@ -9,6 +9,19 @@
   },
   "docs": [
     {
+      "id": "abstract-module",
+      "title": "AbstractModule",
+      "package": "shared",
+      "file": "doc/AbstractModule.html",
+      "description": "Base class for every Triton module. Provides a thread-safe close lifecycle via AtomicBoolean, registered name tracking, and an on-close callback hook. Subclasses implement start(), onClose(), bringToFront(), hideModule(), showModule(), and isVisible(). The shell interacts with all modules exclusively through this contract.",
+      "tags": [
+        "modules",
+        "core"
+      ],
+      "innerClasses": [],
+      "updated": "2026-02-21"
+    },
+    {
       "id": "echelon-frame",
       "title": "EchelonFrame",
       "package": "triton.ui",
