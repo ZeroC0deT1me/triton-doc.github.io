@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModProtection — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d12;
+    --surface: #111420;
+    --surface2: #181c2b;
+    --border: #232840;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --text: #d4d8f0;
+    --muted: #6b7280;
+    --code-bg: #0d1117;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 270px 1fr;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── Sidebar ─── */
+  aside {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 0 0 2rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .back-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .back-bar:hover { color: var(--text); background: var(--surface2); }
+
+  .sidebar-header {
+    padding: 1.5rem 1.5rem 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .sidebar-pkg {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.67rem;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.05em;
+  }
+
+  .sidebar-classname {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+  }
+
+  .sidebar-kind {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--warn);
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 4px;
+    padding: 0.15em 0.55em;
+  }
+
+  nav { padding: 1rem 1rem 0; flex: 1; }
+
+  nav .nav-section {
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 1rem 0.75rem 0.4rem;
+    display: block;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.75rem;
+    border-radius: 6px;
+    color: #8b92b8;
+    text-decoration: none;
+    font-size: 0.825rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  nav a:hover {
+    color: var(--text);
+    background: var(--surface2);
+    border-left-color: var(--warn);
+  }
+
+  nav a.inner {
+    font-size: 0.775rem;
+    padding-left: 1.5rem;
+    color: #5a6080;
+  }
+  nav a.inner::before { content: '↳'; font-size: 0.7rem; color: var(--border); }
+  nav a.inner:hover { color: #8b92b8; border-left-color: var(--accent2); }
+
+  /* ─── Main ─── */
+  main { padding: 3.5rem 3.5rem 5rem; max-width: 900px; }
+
+  .hero {
+    margin-bottom: 3.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--warn);
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 100px;
+    padding: 0.3rem 0.85rem;
+    margin-bottom: 1.25rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--warn);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .hero-meta span { display: flex; align-items: center; gap: 0.4rem; }
+  .hero-meta code {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.45em;
+    color: #a5b4fc;
+    font-size: 0.82em;
+  }
+
+  .hero-desc {
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    line-height: 1.8;
+    max-width: 640px;
+  }
+
+  section { margin-bottom: 3.5rem; }
+
+  h2 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  h3 { font-size: 1rem; font-weight: 600; color: #b8bfdf; margin: 2rem 0 0.75rem; }
+
+  p {
+    color: var(--text);
+    margin-bottom: 1rem;
+    font-size: 0.925rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    line-height: 1.85;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    position: relative;
+  }
+  pre::before {
+    content: attr(data-lang);
+    position: absolute; top: 0.75rem; right: 1rem;
+    font-size: 0.63rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); font-family: 'DM Mono', monospace;
+  }
+
+  code { font-family: 'DM Mono', monospace; font-size: 0.845rem; line-height: 1.7; }
+  pre code { color: #e2e8f0; }
+  :not(pre) > code {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    font-size: 0.82em;
+    color: #a5b4fc;
+  }
+
+  .kw  { color: #c084fc; }
+  .ty  { color: #67e8f9; }
+  .str { color: #86efac; }
+  .cm  { color: #4b5563; font-style: italic; }
+  .an  { color: #fbbf24; }
+
+  .callout {
+    border-radius: 10px; padding: 1.1rem 1.4rem; margin: 1.4rem 0;
+    border-left: 3px solid;
+    font-family: 'DM Mono', monospace; font-size: 0.855rem; font-weight: 300; line-height: 1.75;
+  }
+  .callout strong {
+    font-weight: 600; display: block; margin-bottom: 0.3rem;
+    text-transform: uppercase; font-size: 0.67rem; letter-spacing: 0.12em;
+  }
+  .callout-info   { background: rgba(79,142,247,0.08);  border-color: var(--accent);  color: #93b8fb; }
+  .callout-warn   { background: rgba(245,158,11,0.08);  border-color: var(--warn);    color: #fcd34d; }
+  .callout-danger { background: rgba(239,68,68,0.08);   border-color: var(--danger);  color: #fca5a5; }
+
+  /* ─── Policy grid ─── */
+  .policy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1.4rem 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.81rem;
+  }
+  .policy-cell { background: var(--surface); padding: 1rem 1.2rem; }
+  .policy-cell.header {
+    background: var(--surface2);
+    font-weight: 600; font-size: 0.67rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  }
+  .policy-cell p { color: #8b92b8; margin: 0; font-size: 0.8rem; }
+
+  .ptag {
+    display: inline-block; border-radius: 4px;
+    padding: 0.12em 0.5em; font-size: 0.72rem; font-weight: 600; margin-bottom: 0.4rem;
+  }
+  .ptag-allow    { background: rgba(34,197,94,0.15);  color: var(--success); }
+  .ptag-disallow { background: rgba(239,68,68,0.15);  color: var(--danger);  }
+  .ptag-default  { background: rgba(245,158,11,0.15); color: var(--warn);    }
+
+  /* ─── Enum member table ─── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.4rem 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+  }
+  .data-table th {
+    text-align: left; font-size: 0.63rem; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+    padding: 0.7rem 1rem; border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #1a1f30;
+    color: var(--text); vertical-align: top;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--surface2); }
+
+  /* ─── Dir tree ─── */
+  .dir-tree {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.4rem;
+    font-family: 'DM Mono', monospace; font-size: 0.83rem; line-height: 2; color: var(--text);
+  }
+  .dir-tree .dir  { color: var(--accent2); }
+  .dir-tree .note { color: var(--muted); margin-left: 1rem; font-size: 0.77rem; }
+
+  /* ─── Notification badges ─── */
+  .notif-row { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+  .notif-badge {
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.25em 0.7em;
+    border-radius: 5px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .nb-modded  { background: rgba(79,142,247,0.12); color: var(--accent); border: 1px solid rgba(79,142,247,0.25); }
+  .nb-blocked { background: rgba(239,68,68,0.12);  color: var(--danger); border: 1px solid rgba(239,68,68,0.25);  }
+  .notif-desc { font-family: 'DM Mono', monospace; font-size: 0.83rem; font-weight: 300; color: var(--text); line-height: 1.7; }
+
+  aside::-webkit-scrollbar { width: 4px; }
+  aside::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: relative; height: auto; }
+    main { padding: 2rem 1.5rem; }
+    h1 { font-size: 1.8rem; }
+    .policy-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ─── Sidebar ─── -->
+  <aside>
+    <a class="back-bar" href="../index.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      All docs
+    </a>
+
+    <div class="sidebar-header">
+      <div class="sidebar-pkg">shared</div>
+      <div class="sidebar-classname">ModProtection</div>
+      <span class="sidebar-kind">@annotation</span>
+    </div>
+
+    <nav>
+      <span class="nav-section">Overview</span>
+      <a href="#overview">Overview</a>
+
+      <span class="nav-section">Annotation</span>
+      <a href="#policy-enum">Policy enum</a>
+      <a href="#policies">Policy table</a>
+
+      <span class="nav-section">Usage</span>
+      <a href="#annotating">Annotating classes</a>
+      <a href="#override-files">Override file placement</a>
+
+      <span class="nav-section">Runtime behaviour</span>
+      <a href="#evaluation">Evaluation at load time</a>
+      <a href="#notifications">Notifications</a>
+    </nav>
+  </aside>
+
+  <!-- ─── Main ─── -->
+  <main>
+
+    <!-- Hero -->
+    <div class="hero" id="overview">
+      <div class="hero-badge">TRITON-80 · shared</div>
+      <h1>@ModProtection</h1>
+      <div class="hero-meta">
+        <span>Package <code>shared</code></span>
+        <span>Type <code>@interface</code> (annotation)</span>
+        <span>Retention <code>RUNTIME</code></span>
+        <span>Target <code>TYPE</code></span>
+      </div>
+      <p class="hero-desc">Controls whether a framework class can be overridden by a module's <code>mod/</code> files. Applied to framework-side classes, it is evaluated at runtime by <code>ModuleFirstClassLoader</code> to allow silent overrides, notify the user of overrides, or fully reject them.</p>
+    </div>
+
+    <!-- Policy enum -->
+    <section id="policy-enum">
+      <h2>Policy enum</h2>
+      <p>The annotation takes a single required element — <code>value()</code> — of type <code>Policy</code>.</p>
+
+<pre data-lang="Java"><code><span class="kw">public</span> <span class="an">@interface</span> <span class="ty">ModProtection</span> {
+
+    <span class="ty">Policy</span> value();
+
+    <span class="kw">enum</span> <span class="ty">Policy</span> {
+        <span class="cm">/** Override allowed — silent, no user notification */</span>
+        ALLOW_MOD,
+
+        <span class="cm">/** Override rejected — classloader uses the parent (framework) version */</span>
+        DISALLOW_MOD
+    }
+}</code></pre>
+
+      <table class="data-table">
+        <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="ptag ptag-allow">ALLOW_MOD</span></td>
+            <td>The framework explicitly permits this class to be overridden. The mod version is loaded without any user-facing notification.</td>
+          </tr>
+          <tr>
+            <td><span class="ptag ptag-disallow">DISALLOW_MOD</span></td>
+            <td>The framework prohibits override. The classloader silently ignores the mod file and loads the parent version. A <strong>Mod Blocked</strong> notification is shown.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Policy table -->
+    <section id="policies">
+      <h2>Policy Table</h2>
+      <p>Including the implicit default when no annotation is present:</p>
+
+      <div class="policy-grid">
+        <div class="policy-cell header">Annotation</div>
+        <div class="policy-cell header">Behaviour</div>
+        <div class="policy-cell header">User notification</div>
+
+        <div class="policy-cell">
+          <span class="ptag ptag-allow">ALLOW_MOD</span><br>
+          <code>@ModProtection(Policy.ALLOW_MOD)</code>
+        </div>
+        <div class="policy-cell"><p>Mod override explicitly permitted. Mod version loaded.</p></div>
+        <div class="policy-cell"><p>Silent — no notification.</p></div>
+
+        <div class="policy-cell">
+          <span class="ptag ptag-disallow">DISALLOW_MOD</span><br>
+          <code>@ModProtection(Policy.DISALLOW_MOD)</code>
+        </div>
+        <div class="policy-cell"><p>Override rejected. Parent (framework) version loaded. Mod file ignored.</p></div>
+        <div class="policy-cell"><p><strong>Mod Blocked</strong> bubble.</p></div>
+
+        <div class="policy-cell">
+          <span class="ptag ptag-default">No annotation</span><br>
+          <em style="color:var(--muted);font-size:0.78rem;">(implicit default)</em>
+        </div>
+        <div class="policy-cell"><p>Override allowed. Mod version loaded.</p></div>
+        <div class="policy-cell"><p><strong>Class Modded</strong> bubble.</p></div>
+      </div>
+
+      <div class="callout callout-danger">
+        <strong>Hard exception</strong>
+        <code>shared.*</code>, <code>java.*</code>, and <code>javax.*</code> are <em>always</em> delegated to the parent classloader, regardless of <code>@ModProtection</code>. These packages are never overridable.
+      </div>
+    </section>
+
+    <!-- Annotating classes -->
+    <section id="annotating">
+      <h2>Annotating Framework Classes</h2>
+<pre data-lang="Java"><code><span class="cm">// Silent override — framework explicitly opts this class in</span>
+<span class="an">@ModProtection</span>(<span class="ty">ModProtection</span>.<span class="ty">Policy</span>.ALLOW_MOD)
+<span class="kw">public class</span> <span class="ty">UIHelper</span> { ... }
+
+<span class="cm">// Override blocked — classloader rejects mod file, uses this version</span>
+<span class="an">@ModProtection</span>(<span class="ty">ModProtection</span>.<span class="ty">Policy</span>.DISALLOW_MOD)
+<span class="kw">public class</span> <span class="ty">SecurityCore</span> { ... }
+
+<span class="cm">// No annotation — override allowed, but user sees "Class Modded" notification</span>
+<span class="kw">public class</span> <span class="ty">SomeUtility</span> { ... }</code></pre>
+
+      <div class="callout callout-info">
+        <strong>Design intent</strong>
+        Use <code>ALLOW_MOD</code> on classes that are <em>designed</em> to be overridden (e.g. UI skins, theme helpers). Use <code>DISALLOW_MOD</code> on classes where integrity must be guaranteed (e.g. auth, security, core scheduling). Leave unannotated when override is tolerated but should be visible to the user.
+      </div>
+    </section>
+
+    <!-- Override file placement -->
+    <section id="override-files">
+      <h2>Override File Placement</h2>
+      <p>Override files must mirror the full package path of the class they replace, nested under <code>mod/</code> inside the module directory:</p>
+
+      <div class="dir-tree">
+        <span class="dir">MyModule/</span><br>
+        &nbsp;&nbsp;<span class="dir">├── mod/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">└── triton/desktop/core/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">UIHelper.java</span><span class="note">→ overrides triton.desktop.core.UIHelper</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">└── triton/desktop/widgets/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">StatusBar.java</span><span class="note">→ overrides triton.desktop.widgets.StatusBar</span>
+      </div>
+
+      <p>The mod compilation classpath includes both the framework and the module's own <code>bin/</code>, so override classes can freely reference framework APIs and module-internal classes.</p>
+
+      <div class="callout callout-warn">
+        <strong>New classes in mod/</strong>
+        If a class in <code>mod/</code> has no counterpart in the parent classloader (i.e. it's a brand-new class, not an override), it is loaded directly with no annotation check and no notification.
+      </div>
+    </section>
+
+    <!-- Evaluation at load time -->
+    <section id="evaluation">
+      <h2>Evaluation at Load Time</h2>
+      <p>Evaluation happens inside <code>ModuleFirstClassLoader.loadClass()</code>, only when a <code>.class</code> file is found in <code>mod-bin/</code> for the requested class name. The sequence is:</p>
+      <ol style="padding-left:1.5rem; font-family:'DM Mono',monospace; font-size:0.875rem; color:var(--text); line-height:2.2;">
+        <li>Attempt to load the same class name from the <em>parent</em> classloader.</li>
+        <li>If the parent class is not found → new class, load from <code>mod-bin/</code> directly, no check.</li>
+        <li>If found, read <code>@ModProtection</code> via reflection (<code>parentClass.getAnnotation(ModProtection.class)</code>).</li>
+        <li>Apply the policy table above.</li>
+      </ol>
+    </section>
+
+    <!-- Notifications -->
+    <section id="notifications">
+      <h2>Notifications</h2>
+      <p>Both notification events are dispatched on the Swing EDT via <code>SmartInform.sendOverrideBubble()</code>, showing the module name and the unqualified class name. If the notification system is unavailable, both fall back to <code>System.out.println</code> prefixed with <code>[CMO-Mod]</code>.</p>
+
+      <div class="notif-row">
+        <span class="notif-badge nb-modded">Class Modded</span>
+        <p class="notif-desc">Fired when a mod version is loaded and the parent class carries <em>no</em> <code>@ModProtection</code> annotation. Informs the user that an unanticipated override is active.</p>
+      </div>
+      <div class="notif-row">
+        <span class="notif-badge nb-blocked">Mod Blocked</span>
+        <p class="notif-desc">Fired when a mod file exists in <code>mod-bin/</code> but the parent class is annotated <code>DISALLOW_MOD</code>. Informs the user that the override was silently rejected.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CentralModuleOpener — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d12;
+    --surface: #111420;
+    --surface2: #181c2b;
+    --border: #232840;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --text: #d4d8f0;
+    --muted: #6b7280;
+    --code-bg: #0d1117;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Layout ─── */
+  .layout {
+    display: grid;
+    grid-template-columns: 270px 1fr;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── Sidebar ─── */
+  aside {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 0 0 2rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Back to index */
+  .back-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 400;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .back-bar:hover { color: var(--text); background: var(--surface2); }
+  .back-bar svg { flex-shrink: 0; }
+
+  .sidebar-header {
+    padding: 1.5rem 1.5rem 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .sidebar-pkg {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.67rem;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.05em;
+  }
+
+  .sidebar-classname {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    word-break: break-all;
+  }
+
+  .sidebar-kind {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(79,142,247,0.1);
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: 4px;
+    padding: 0.15em 0.55em;
+  }
+
+  nav { padding: 1rem 1rem 0; flex: 1; }
+
+  nav .nav-group { margin-bottom: 0.25rem; }
+
+  nav .nav-section {
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 1rem 0.75rem 0.4rem;
+    display: block;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.75rem;
+    border-radius: 6px;
+    color: #8b92b8;
+    text-decoration: none;
+    font-size: 0.825rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  nav a:hover {
+    color: var(--text);
+    background: var(--surface2);
+    border-left-color: var(--accent);
+  }
+
+  nav a.inner {
+    font-size: 0.775rem;
+    padding-left: 1.5rem;
+    color: #5a6080;
+  }
+  nav a.inner::before {
+    content: '↳';
+    font-size: 0.7rem;
+    color: var(--border);
+  }
+  nav a.inner:hover { color: #8b92b8; border-left-color: var(--accent2); }
+
+  /* ─── Main ─── */
+  main {
+    padding: 3.5rem 3.5rem 5rem;
+    max-width: 900px;
+  }
+
+  /* ─── Hero ─── */
+  .hero {
+    margin-bottom: 3.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(79,142,247,0.08);
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: 100px;
+    padding: 0.3rem 0.85rem;
+    margin-bottom: 1.25rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .hero-meta span { display: flex; align-items: center; gap: 0.4rem; }
+  .hero-meta code {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.45em;
+    color: #a5b4fc;
+    font-size: 0.82em;
+  }
+
+  .hero-desc {
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    line-height: 1.8;
+    max-width: 640px;
+  }
+
+  /* ─── Class divider ─── */
+  .class-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 4rem 0 2.5rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .class-divider-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25em 0.7em;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-inner { background: rgba(167,139,250,0.12); color: var(--accent2); border: 1px solid rgba(167,139,250,0.25); }
+
+  .class-divider h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+  }
+  .class-divider h2::after { display: none; }
+
+  /* ─── Sections ─── */
+  section { margin-bottom: 3.5rem; }
+
+  h2 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #b8bfdf;
+    margin: 2rem 0 0.75rem;
+  }
+
+  p {
+    color: var(--text);
+    margin-bottom: 1rem;
+    font-size: 0.925rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    line-height: 1.85;
+  }
+
+  /* ─── Code ─── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    position: relative;
+  }
+
+  pre::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0.75rem; right: 1rem;
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  code { font-family: 'DM Mono', monospace; font-size: 0.845rem; line-height: 1.7; }
+  pre code { color: #e2e8f0; }
+
+  :not(pre) > code {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    font-size: 0.82em;
+    color: #a5b4fc;
+  }
+
+  .kw  { color: #c084fc; }
+  .ty  { color: #67e8f9; }
+  .str { color: #86efac; }
+  .cm  { color: #4b5563; font-style: italic; }
+  .an  { color: #fbbf24; }
+  .num { color: #f9a8d4; }
+
+  /* ─── Callouts ─── */
+  .callout {
+    border-radius: 10px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.4rem 0;
+    border-left: 3px solid;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.855rem;
+    font-weight: 300;
+    line-height: 1.75;
+  }
+  .callout strong {
+    font-weight: 600; display: block; margin-bottom: 0.3rem;
+    text-transform: uppercase; font-size: 0.67rem; letter-spacing: 0.12em;
+  }
+  .callout-info   { background: rgba(79,142,247,0.08);  border-color: var(--accent);  color: #93b8fb; }
+  .callout-warn   { background: rgba(245,158,11,0.08);  border-color: var(--warn);    color: #fcd34d; }
+  .callout-danger { background: rgba(239,68,68,0.08);   border-color: var(--danger);  color: #fca5a5; }
+
+  /* ─── Tables ─── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.4rem 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+  }
+  .data-table th {
+    text-align: left;
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #1a1f30;
+    color: var(--text);
+    vertical-align: top;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--surface2); }
+  .cmd-name { color: var(--accent); font-weight: 500; }
+
+  /* ─── Policy grid ─── */
+  .policy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1.4rem 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.81rem;
+  }
+  .policy-cell { background: var(--surface); padding: 1rem 1.2rem; }
+  .policy-cell.header {
+    background: var(--surface2);
+    font-weight: 600; font-size: 0.67rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  }
+  .policy-cell p { color: #8b92b8; margin: 0; font-size: 0.8rem; }
+  .ptag {
+    display: inline-block; border-radius: 4px;
+    padding: 0.12em 0.5em; font-size: 0.72rem; font-weight: 600; margin-bottom: 0.4rem;
+  }
+  .ptag-allow    { background: rgba(34,197,94,0.15);  color: var(--success); }
+  .ptag-disallow { background: rgba(239,68,68,0.15);  color: var(--danger);  }
+  .ptag-default  { background: rgba(245,158,11,0.15); color: var(--warn);    }
+
+  /* ─── Flow ─── */
+  .flow {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin: 1.4rem 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.81rem;
+  }
+  .flow-step {
+    display: flex; align-items: flex-start; gap: 1rem;
+    margin-bottom: 1.2rem; position: relative;
+  }
+  .flow-step:not(:last-child)::after {
+    content: ''; position: absolute;
+    left: 13px; top: 30px;
+    width: 1px; height: calc(100% - 6px);
+    background: var(--border);
+  }
+  .flow-num {
+    flex-shrink: 0; width: 27px; height: 27px; border-radius: 50%;
+    background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.4);
+    color: var(--accent); display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; z-index: 1;
+  }
+  .flow-content { padding-top: 3px; line-height: 1.65; color: var(--text); }
+  .flow-content strong { color: #fff; font-weight: 600; }
+
+  /* ─── Dir tree ─── */
+  .dir-tree {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.4rem;
+    font-family: 'DM Mono', monospace; font-size: 0.83rem; line-height: 2; color: var(--text);
+  }
+  .dir-tree .dir  { color: var(--accent2); }
+  .dir-tree .note { color: var(--muted); margin-left: 1rem; font-size: 0.77rem; }
+
+  /* ─── Scrollbar ─── */
+  aside::-webkit-scrollbar { width: 4px; }
+  aside::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: relative; height: auto; }
+    main { padding: 2rem 1.5rem; }
+    h1 { font-size: 1.8rem; }
+    .policy-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ─── Sidebar ─── -->
+  <aside>
+    <a class="back-bar" href="../index.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      All docs
+    </a>
+
+    <div class="sidebar-header">
+      <div class="sidebar-pkg">triton.desktop.core</div>
+      <div class="sidebar-classname">CentralModuleOpener</div>
+      <span class="sidebar-kind">public class</span>
+    </div>
+
+    <nav>
+      <span class="nav-section">Overview</span>
+      <div class="nav-group">
+        <a href="#overview">Overview</a>
+        <a href="#module-structure">Module Structure</a>
+      </div>
+
+      <span class="nav-section">CentralModuleOpener</span>
+      <div class="nav-group">
+        <a href="#cmo">CentralModuleOpener</a>
+        <a href="#commands">Commands</a>
+        <a href="#open-module">open-module</a>
+        <a href="#run-jar">run-jar</a>
+        <a href="#launch">launch-*</a>
+        <a href="#systemrun">systemrun</a>
+        <a href="#fallback">Fallback Logic</a>
+        <a href="#java-version">Java Version</a>
+      </div>
+
+      <span class="nav-section">Inner Classes</span>
+      <div class="nav-group">
+        <a href="#module-data">ModuleData</a>
+        <a class="inner" href="#module-data-fields">Fields</a>
+        <a href="#classloader">ModuleFirstClassLoader</a>
+        <a class="inner" href="#classloader-priority">Loading Priority</a>
+        <a class="inner" href="#classloader-notifications">Notifications</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ─── Main ─── -->
+  <main>
+
+    <!-- Hero -->
+    <div class="hero" id="overview">
+      <div class="hero-badge">TRITON-80 · Core</div>
+      <h1>CentralModuleOpener</h1>
+      <div class="hero-meta">
+        <span>Package <code>triton.desktop.core</code></span>
+        <span>Visibility <code>public class</code></span>
+        <span>Inner classes <code>ModuleData</code> · <code>ModuleFirstClassLoader</code></span>
+      </div>
+      <p class="hero-desc">The central dispatch point for opening any loadable item in the Triton desktop. Accepts a <code>ModuleData</code> descriptor and routes to the correct loading strategy — compiling Java sources on the fly, launching JARs, running native executables, and recovering gracefully from unknown commands.</p>
+    </div>
+
+    <!-- Module Structure -->
+    <section id="module-structure">
+      <h2>Module Structure</h2>
+      <p>A module is a directory on disk containing Java source files. The loader compiles and instantiates the module at runtime. Expected layout:</p>
+      <div class="dir-tree">
+        <span class="dir">MyModule/</span><br>
+        &nbsp;&nbsp;<span class="dir">├── src/</span><span class="note">Java source files (compiled to bin/)</span><br>
+        &nbsp;&nbsp;<span class="dir">├── Main.java</span><span class="note">Must extend AbstractModule</span><br>
+        &nbsp;&nbsp;<span class="dir">├── lib/</span><span class="note">Optional JARs added to classpath</span><br>
+        &nbsp;&nbsp;<span class="dir">├── mod/</span><span class="note">Class override sources (TRITON-80)</span><br>
+        &nbsp;&nbsp;<span class="dir">├── bin/</span><span class="note">Compiled output (auto-created)</span><br>
+        &nbsp;&nbsp;<span class="dir">├── mod-bin/</span><span class="note">Compiled mod overrides (auto-created)</span><br>
+        &nbsp;&nbsp;<span class="dir">└── module.properties</span><span class="note">Optional — e.g. java.version=17</span>
+      </div>
+    </section>
+
+    <!-- CMO overview -->
+    <section id="cmo">
+      <h2>CentralModuleOpener</h2>
+      <p>Entry point is the static method <code>openModule(ModuleData)</code>. It reads the <code>command</code> field (case-insensitive, trimmed) and dispatches to the appropriate handler. All handlers share the same <code>ModuleData</code> input and return an <code>AbstractModule</code> instance, or <code>null</code> on failure or for fire-and-forget commands like <code>systemrun</code>.</p>
+    </section>
+
+    <!-- Commands -->
+    <section id="commands">
+      <h2>Commands</h2>
+      <p>User-selectable commands are returned by <code>getOpenWithOptions()</code>. The <code>launch-*</code> variants are resolved automatically via <code>resolveJarCommand(File)</code> and are never shown in the UI picker.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Command</th><th>Description</th><th>User-selectable</th></tr></thead>
+        <tbody>
+          <tr><td><span class="cmd-name">open-module</span></td><td>Compile Java sources and load the module at runtime.</td><td>Yes</td></tr>
+          <tr><td><span class="cmd-name">run-jar</span></td><td>Launch a generic external JAR via <code>ProcessJarModule</code>.</td><td>Yes</td></tr>
+          <tr><td><span class="cmd-name">systemrun</span></td><td>Delegate to the OS to open a native executable or file.</td><td>Yes</td></tr>
+          <tr><td><span class="cmd-name">launch-notepack</span></td><td>Wraps Notepack JAR via <code>NotepackProxyModule</code>.</td><td>Auto only</td></tr>
+          <tr><td><span class="cmd-name">launch-eadgyth120</span></td><td>Wraps Eadgyth 1.2.0 JAR via <code>EadgythProxyModule</code>.</td><td>Auto only</td></tr>
+          <tr><td><span class="cmd-name">launch-*</span></td><td>Any other prefix falls back to <code>JarLauncherModule</code>.</td><td>Auto only</td></tr>
+        </tbody>
+      </table>
+
+      <h3>JAR command resolution</h3>
+      <p><code>resolveJarCommand(File)</code> strips the extension, lowercases the base name, and looks it up in <code>KNOWN_JAR_COMMANDS</code>. Unknown JARs default to <code>run-jar</code>. This map is shared between the opener and the desktop module scanner.</p>
+
+<pre data-lang="Java"><code><span class="cm">// KNOWN_JAR_COMMANDS — add entries here to support new named JARs</span>
+m.put(<span class="str">"notepack"</span>,   <span class="str">"launch-notepack"</span>);
+m.put(<span class="str">"eadgyth120"</span>, <span class="str">"launch-eadgyth120"</span>);</code></pre>
+    </section>
+
+    <!-- open-module -->
+    <section id="open-module">
+      <h2>open-module — Compilation &amp; Loading</h2>
+      <p>Primary loading path for Triton source modules.</p>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Validate directory</strong> — if the path resolves to a JAR instead, auto-corrects to the appropriate JAR command.</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Collect sources</strong> — recursively finds all <code>.java</code> files, skipping <code>bin/</code>, <code>mod-bin/</code>, and <code>mod/</code>. If none found but a JAR exists in the dir, auto-redirects to the JAR command.</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Resolve Java version</strong> — reads <code>module.properties</code> for <code>java.version</code>; caps at the running JVM's feature version. See <a href="#java-version">Java Version</a>.</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Compile main sources</strong> — uses JDK system compiler (<code>javax.tools</code>). Falls back to ECJ if unavailable. Output goes to <code>bin/</code>.</div></div>
+        <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Compile mod/ sources</strong> — if <code>mod/</code> exists and has <code>.java</code> files, compiles them to <code>mod-bin/</code>. A failed mod compile warns but does not abort module load.</div></div>
+        <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Create classloader</strong> — constructs a <a href="#classloader"><code>ModuleFirstClassLoader</code></a> with <code>mod-bin/</code> first so overrides take priority.</div></div>
+        <div class="flow-step"><div class="flow-num">7</div><div class="flow-content"><strong>Instantiate &amp; start</strong> — loads class <code>Main</code>, verifies it extends <code>AbstractModule</code>, calls <code>start()</code>, registers with <code>CentralModuleController</code>, attaches SnapAssist after 1 s delay.</div></div>
+      </div>
+      <p>The compiler classpath always includes the system classpath (so modules can access Triton framework classes) plus any JARs in <code>lib/</code>.</p>
+    </section>
+
+    <!-- run-jar -->
+    <section id="run-jar">
+      <h2>run-jar — External JAR</h2>
+      <p>Launches a generic external JAR via <code>ProcessJarModule</code>. If the path is a directory, the first <code>.jar</code> inside it is used. Before launching, <code>resolveJarCommand</code> is consulted — if the JAR name matches a known entry, the call is silently redirected to the appropriate <code>launch-*</code> handler.</p>
+    </section>
+
+    <!-- launch-* -->
+    <section id="launch">
+      <h2>launch-* — Named JAR Proxy Modules</h2>
+      <p>Known external apps are wrapped in dedicated proxy modules for tighter Triton shell integration (bottom bar, lifecycle hooks, TTS, etc.).</p>
+      <table class="data-table">
+        <thead><tr><th>Command</th><th>Proxy Class</th></tr></thead>
+        <tbody>
+          <tr><td><span class="cmd-name">launch-notepack</span></td><td><code>NotepackProxyModule</code></td></tr>
+          <tr><td><span class="cmd-name">launch-eadgyth120</span></td><td><code>EadgythProxyModule</code></td></tr>
+          <tr><td><span class="cmd-name">launch-&lt;any&gt;</span></td><td><code>JarLauncherModule</code> (generic fallback)</td></tr>
+        </tbody>
+      </table>
+      <p>All <code>launch-*</code> modules are registered in <code>CentralModuleController</code>, given a unique name via <code>getUniqueName()</code>, added to the bottom bar, and registered with <code>TaskHooks</code>.</p>
+    </section>
+
+    <!-- systemrun -->
+    <section id="systemrun">
+      <h2>systemrun — Native Executables</h2>
+      <p>Delegates to <code>ExternalProgramHandler.launchExternal()</code> to open any OS-native file or executable. Returns <code>null</code> — no <code>AbstractModule</code> is created and the process runs entirely outside the Triton module lifecycle.</p>
+    </section>
+
+    <!-- Fallback -->
+    <section id="fallback">
+      <h2>Fallback Logic</h2>
+      <p>When an unrecognised command is received, the opener attempts best-effort resolution from <code>commandString</code>:</p>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-content">Path is a <strong>.jar file</strong> → redirect to <code>resolveJarCommand()</code>.</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-content">Path is a <strong>directory with .java sources</strong> → redirect to <code>open-module</code>.</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-content">Path is a <strong>directory containing a JAR</strong> → redirect to <code>resolveJarCommand()</code> on that JAR.</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-content">Path <strong>exists</strong> (any other file) → redirect to <code>systemrun</code>, let the OS decide.</div></div>
+        <div class="flow-step"><div class="flow-num">5</div><div class="flow-content">Nothing worked → show error popup.</div></div>
+      </div>
+    </section>
+
+    <!-- Java Version -->
+    <section id="java-version">
+      <h2>Java Version Resolution</h2>
+      <p><code>resolveTargetJavaVersion(File moduleDir)</code> determines the <code>--release</code> flag. Resolution order:</p>
+      <ol style="padding-left:1.5rem; font-family:'DM Mono',monospace; font-size:0.875rem; color:var(--text); line-height:2.2;">
+        <li>Read <code>java.version</code> from <code>module.properties</code> if present.</li>
+        <li>Cap the requested version at the running JVM's feature version.</li>
+        <li>Default to the running JVM version if no property is found.</li>
+      </ol>
+<pre data-lang="module.properties"><code><span class="cm"># Request Java 17 compatibility (capped at runtime version)</span>
+<span class="str">java.version</span>=<span class="num">17</span></code></pre>
+      <div class="callout callout-warn">
+        <strong>Compiler selection</strong>
+        JDK system compiler is preferred. If unavailable, ECJ is used as a fallback. Java ≥ 9 uses <code>--release N</code>; Java 8 and below uses <code>-source 1.N -target 1.N</code>.
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════ -->
+    <!--  INNER CLASS: ModuleData           -->
+    <!-- ══════════════════════════════════ -->
+    <div class="class-divider" id="module-data">
+      <span class="class-divider-badge badge-inner">static inner class</span>
+      <h2>ModuleData</h2>
+    </div>
+
+    <section id="module-data-fields">
+      <h2>Fields</h2>
+      <p>A plain data carrier that describes what to open. Passed directly into <code>openModule()</code>.</p>
+<pre data-lang="Java"><code><span class="kw">public static class</span> <span class="ty">ModuleData</span> {
+    <span class="kw">public</span> <span class="ty">String</span> buttonName;     <span class="cm">// Display name shown in the UI</span>
+    <span class="kw">public</span> <span class="ty">String</span> command;         <span class="cm">// Launch strategy — see Commands</span>
+    <span class="kw">public</span> <span class="ty">String</span> commandString;   <span class="cm">// Path to module dir, JAR, or executable</span>
+    <span class="kw">public</span> <span class="ty">String</span> icon;            <span class="cm">// Icon resource path (UI only)</span>
+}</code></pre>
+      <div class="callout callout-info">
+        <strong>Note</strong>
+        The <code>command</code> field is case-insensitive and trimmed before dispatch. Mutation of <code>command</code> and <code>commandString</code> during recursive fallback resolution is intentional — the same object is reused across redirects.
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════════ -->
+    <!--  INNER CLASS: ModuleFirstClassLoader   -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="class-divider" id="classloader">
+      <span class="class-divider-badge badge-inner">private static inner class</span>
+      <h2>ModuleFirstClassLoader</h2>
+    </div>
+
+    <section id="classloader-priority">
+      <h2>Loading Priority</h2>
+      <p>Extends <code>URLClassLoader</code> with mod-aware, module-first resolution. Created after successful compilation and lives for the lifetime of its module.</p>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Already loaded</strong> — returns cached class immediately.</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Core packages</strong> (<code>java.*</code>, <code>javax.*</code>, <code>shared.*</code>) — always delegates to parent. Never overridable.</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Mod override check</strong> — if a matching <code>.class</code> exists in <code>mod-bin/</code>, the parent class's <code>@ModProtection</code> annotation is consulted before loading. See policy table below.</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Module bin/</strong> — tries loading from the module's own compiled output.</div></div>
+        <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Parent</strong> — falls back to the application classloader.</div></div>
+      </div>
+
+      <h3>@ModProtection policy at load time</h3>
+      <div class="policy-grid">
+        <div class="policy-cell header">Annotation on parent class</div>
+        <div class="policy-cell header">Behaviour</div>
+        <div class="policy-cell header">Notification</div>
+
+        <div class="policy-cell">
+          <span class="ptag ptag-allow">ALLOW_MOD</span><br>
+          <code>@ModProtection(Policy.ALLOW_MOD)</code>
+        </div>
+        <div class="policy-cell"><p>Mod version loaded silently.</p></div>
+        <div class="policy-cell"><p>None.</p></div>
+
+        <div class="policy-cell">
+          <span class="ptag ptag-disallow">DISALLOW_MOD</span><br>
+          <code>@ModProtection(Policy.DISALLOW_MOD)</code>
+        </div>
+        <div class="policy-cell"><p>Mod file ignored — parent (framework) version loaded.</p></div>
+        <div class="policy-cell"><p><strong>Mod Blocked</strong> bubble.</p></div>
+
+        <div class="policy-cell">
+          <span class="ptag ptag-default">No annotation</span>
+        </div>
+        <div class="policy-cell"><p>Mod version loaded.</p></div>
+        <div class="policy-cell"><p><strong>Class Modded</strong> bubble.</p></div>
+      </div>
+
+      <div class="callout callout-danger">
+        <strong>Important</strong>
+        <code>shared.*</code> is always delegated to the parent regardless of <code>@ModProtection</code>. The annotation only controls non-shared framework classes.
+      </div>
+    </section>
+
+    <section id="classloader-notifications">
+      <h2>Notifications</h2>
+      <p>Both notification types call <code>SmartInform.sendOverrideBubble()</code> on the EDT, showing the module name and the short (unqualified) class name. If the notification UI is unavailable, both fall back to a <code>System.out.println</code> prefixed with <code>[CMO-Mod]</code>.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Method</th><th>Title</th><th>Trigger</th></tr></thead>
+        <tbody>
+          <tr><td><code>notifyModded()</code></td><td>Class Modded</td><td>Mod loaded; parent class has no <code>@ModProtection</code>.</td></tr>
+          <tr><td><code>notifyModBlocked()</code></td><td>Mod Blocked</td><td>Mod file found but parent has <code>DISALLOW_MOD</code>.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>
