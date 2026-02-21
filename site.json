@@ -1,0 +1,28 @@
+{
+  "site": {
+    "name": "Triton Framework",
+    "tagline": "Developer Reference",
+    "description": "Official documentation for the Triton Framework — module loading, class protection, and the Triton desktop runtime.",
+    "repo": "https://github.com/your-org/triton",
+    "version": "TRITON-80",
+    "theme": "dark"
+  },
+  "docs": [
+    {
+      "id": "central-module-opener",
+      "title": "CentralModuleOpener",
+      "file": "doc/CentralModuleOpener.html",
+      "description": "Central dispatch point for opening any loadable item in the Triton desktop. Handles on-the-fly Java compilation, JAR launching, native execution, and graceful fallback. Includes inner classes ModuleData and ModuleFirstClassLoader.",
+      "tags": ["core", "modules", "classloader"],
+      "updated": "2026-02-20"
+    },
+    {
+      "id": "mod-protection",
+      "title": "ModProtection",
+      "file": "doc/ModProtection.html",
+      "description": "Runtime annotation controlling whether a framework class can be overridden by module mod/ files. Supports ALLOW_MOD (silent), DISALLOW_MOD (blocked), and an implicit default that notifies the user.",
+      "tags": ["core", "annotations", "modules"],
+      "updated": "2026-02-20"
+    }
+  ]
+}
