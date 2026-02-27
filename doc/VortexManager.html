@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VortexManager — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117;--vortex:#f97316}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2}
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:.15em .55em;color:var(--vortex);background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.25)}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--vortex)}
+  nav a.inner{font-size:.78rem;padding-left:1.5rem;color:#5a6080}
+  nav a.inner::before{content:'↳';font-size:.7rem;color:var(--border)}
+  nav a.inner:hover{color:#8b92b8;border-left-color:var(--accent2)}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--vortex);background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--vortex);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:660px}
+  .class-divider{display:flex;align-items:center;gap:1rem;margin:4rem 0 2rem;padding-top:3rem;border-top:1px solid var(--border)}
+  .class-divider-badge{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.25em .7em;border-radius:4px;white-space:nowrap;flex-shrink:0;background:rgba(167,139,250,.12);color:var(--accent2);border:1px solid rgba(167,139,250,.25)}
+  .class-divider h2{font-size:1.5rem;font-weight:800;color:#fff;margin:0}
+  .class-divider h2::after{display:none}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}.iface{color:#4ade80}.vx{color:#f97316}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .callout-danger{background:rgba(239,68,68,.08);border-color:var(--danger);color:#fca5a5}
+  .callout-vortex{background:rgba(249,115,22,.08);border-color:var(--vortex);color:#fdba74}
+  .callout-success{background:rgba(34,197,94,.08);border-color:var(--success);color:#86efac}
+  .data-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .data-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .data-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .data-table tr:last-child td{border-bottom:none}
+  .data-table tr:hover td{background:var(--surface2)}
+  .flow{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.75rem;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.83rem}
+  .flow-step{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.2rem;position:relative}
+  .flow-step:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;width:1px;height:calc(100% - 6px);background:var(--border)}
+  .flow-num{flex-shrink:0;width:27px;height:27px;border-radius:50%;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.4);color:var(--vortex);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;z-index:1}
+  .flow-content{padding-top:3px;line-height:1.65;color:var(--text)}
+  .flow-content strong{color:#fff;font-weight:600}
+  aside::-webkit-scrollbar{width:4px}
+  aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr};aside{position:relative;height:auto};main{padding:2rem 1.5rem};h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">echelon.module.vortex</div>
+    <div class="sidebar-classname">VortexManager</div>
+    <span class="sidebar-kind">singleton manager</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+    <a href="#quick-start">Quick start</a>
+    <span class="nav-section">Initialization</span>
+    <a href="#initialize">initialize()</a>
+    <a href="#timing">Timing requirement</a>
+    <span class="nav-section">Deploy</span>
+    <a href="#deploy-system">deploySystemOverride()</a>
+    <a href="#deploy-include">deployInclude()</a>
+    <a href="#deploy-jar">deployJar()</a>
+    <a href="#deploy-from-file">deployFromFile()</a>
+    <a href="#staging">absorbFromStaging()</a>
+    <span class="nav-section">Manage</span>
+    <a href="#remove">remove() / purgeAll()</a>
+    <a href="#snapshots">Snapshots</a>
+    <a href="#restart">Restart</a>
+    <span class="nav-section">Query</span>
+    <a href="#query">Query API</a>
+    <span class="nav-section">Inner Types</span>
+    <a href="#vortex-entry">VortexEntry</a>
+    <a class="inner" href="#entry-fields">Fields</a>
+    <a class="inner" href="#entry-type">Type enum</a>
+    <span class="nav-section">See also</span>
+    <a href="VortexLoader.html">VortexLoader →</a>
+  </nav>
+</aside>
+<main>
+
+  <div class="hero" id="overview">
+    <div class="hero-badge">echelon.module.vortex</div>
+    <h1>VortexManager</h1>
+    <div class="hero-meta">
+      <span>Package <code>echelon.module.vortex</code></span>
+      <span>Type <code>public final class</code> · singleton</span>
+      <span>Owns <a href="VortexLoader.html" style="color:var(--vortex);text-decoration:none">VortexLoader</a></span>
+    </div>
+    <p class="hero-desc">High-level coordinator for the Vortex class-loading system. Manages the lifecycle of a <a href="VortexLoader.html" style="color:var(--vortex);text-decoration:none"><code>VortexLoader</code></a>, the on-disk directory structure, the <code>vortex_manifest.json</code> registry, staging, snapshot/rollback, and the programmatic deploy API. Initialize it once at app startup — all subsequent module loads automatically benefit from any absorbed or included classes.</p>
+  </div>
+
+  <section id="quick-start">
+    <h2>Quick Start</h2>
+<pre data-lang="Java"><code><span class="kw">public static void</span> main(<span class="ty">String</span>[] args) {
+    <span class="cm">// 1. Initialize Vortex FIRST — before any app classes are touched</span>
+    <span class="ty">VortexManager</span> vortex = <span class="ty">VortexManager</span>.<span class="fn">initialize</span>();
+
+    <span class="cm">// 2. Optional: observe what gets absorbed</span>
+    vortex.<span class="fn">getLoader</span>().<span class="fn">setListener</span>((className, event) -> {
+        <span class="kw">switch</span> (event) {
+            <span class="kw">case</span> ABSORBED -> System.out.println(<span class="str">"Absorbed: "</span> + className);
+            <span class="kw">case</span> REJECTED_LOCKED -> System.out.println(<span class="str">"Sealed: "</span> + className);
+            <span class="kw">case</span> FAILED  -> System.err.println(<span class="str">"Failed:  "</span> + className);
+        }
+    });
+
+    <span class="cm">// 3. Launch app normally — Vortex is transparent from here on</span>
+    <span class="ty">EchelonDesktop</span>.<span class="fn">launch</span>(args);
+}</code></pre>
+  </section>
+
+  <section id="initialize">
+    <h2>initialize()</h2>
+    <p>Two overloads — both use double-checked locking and are safe to call any number of times:</p>
+    <table class="data-table">
+      <thead><tr><th>Overload</th><th>Resolves root from</th></tr></thead>
+      <tbody>
+        <tr><td><code>VortexManager.initialize()</code></td><td><code>DirectoryConfig.shared().getMain()</code> + <code>"vortex-module"</code> — standard app layout.</td></tr>
+        <tr><td><code>VortexManager.initialize(Path vortexRoot)</code></td><td>Explicit path — useful for tests or non-standard deployments.</td></tr>
+      </tbody>
+    </table>
+    <p>On first call, <code>setup()</code> runs: creates <code>system/</code>, <code>staging/</code>, and <code>snapshots/</code> directories if they don't exist, loads the manifest, sets the current thread's context classloader to the <code>VortexLoader</code>, and logs a startup summary.</p>
+    <p>Use <code>VortexManager.getInstance()</code> to retrieve the singleton after initialization — returns <code>null</code> if not yet initialized.</p>
+  </section>
+
+  <section id="timing">
+    <h2>Timing Requirement</h2>
+    <div class="callout callout-danger">
+      <strong>Must be first</strong>
+      <code>VortexManager.initialize()</code> must be called before any class you intend to override is referenced. Once the JVM loads and caches a class, it will not reload it for the lifetime of the process — that is why a restart is required for new overrides to take effect.
+    </div>
+    <div class="callout callout-info">
+      <strong>Thread context classloader</strong>
+      <code>setup()</code> sets the initializing thread's context classloader to the <code>VortexLoader</code>. If you spawn raw threads later, set their context classloader explicitly: <code>thread.setContextClassLoader(VortexManager.getInstance().getLoader())</code>.
+    </div>
+  </section>
+
+  <section id="deploy-system">
+    <h2>deploySystemOverride()</h2>
+    <p>Writes compiled <code>.class</code> bytes into <code>system/</code> under the correct package path, records the entry in the manifest, and persists <code>vortex_manifest.json</code>. The override takes effect on next restart.</p>
+<pre data-lang="Java"><code><span class="cm">// Override an existing framework class</span>
+<span class="kw">byte</span>[] newBytes = <span class="ty">Files</span>.<span class="fn">readAllBytes</span>(patchedClassFile);
+vortex.<span class="fn">deploySystemOverride</span>(<span class="str">"echelon.ui.WindowManager"</span>, newBytes, <span class="str">"1.5.0"</span>);
+vortex.<span class="fn">requestRestart</span>(() -> <span class="ty">EchelonDesktop</span>.<span class="fn">restart</span>());</code></pre>
+  </section>
+
+  <section id="deploy-include">
+    <h2>deployInclude()</h2>
+    <p>Same as <code>deploySystemOverride()</code> but writes to the vortex root (not <code>system/</code>). For classes that do <em>not</em> exist in the JAR. If the class already exists in the JAR, <code>VortexLoader</code> will reject it at load time with <code>REJECTED_INCLUDE_CONFLICT</code>.</p>
+  </section>
+
+  <section id="deploy-jar">
+    <h2>deployJar()</h2>
+    <p>Copies a <code>.jar</code> file into the appropriate directory (<code>system/</code> for override mode, vortex root for include mode), registers it in the manifest under the key <code>jar:filename.jar</code>, then calls <code>VortexLoader.rescanJars()</code> so the new JAR is indexed immediately. Already-loaded classes still require a restart.</p>
+<pre data-lang="Java"><code><span class="cm">// Deploy a hotfix JAR — overrides existing classes</span>
+vortex.<span class="fn">deployJar</span>(
+    <span class="ty">Path</span>.<span class="fn">of</span>(<span class="str">"hotfix-1.5.jar"</span>),
+    <span class="ty">VortexEntry</span>.Type.SYSTEM,
+    <span class="str">"1.5.0"</span>
+);</code></pre>
+  </section>
+
+  <section id="deploy-from-file">
+    <h2>deployFromFile()</h2>
+    <p>Reads bytes from a <code>Path</code> on disk and delegates to the appropriate deploy method. Convenience wrapper for when you already have the <code>.class</code> file sitting on disk rather than in memory.</p>
+  </section>
+
+  <section id="staging">
+    <h2>absorbFromStaging()</h2>
+    <p>Processes all <code>.class</code> files in <code>staging/</code> and moves them to the correct live directories, mirroring the staging layout:</p>
+    <table class="data-table">
+      <thead><tr><th>Staging path</th><th>Deployed to</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr><td><code>staging/system/echelon/ui/X.class</code></td><td><code>system/echelon/ui/X.class</code></td><td><code>SYSTEM</code> override</td></tr>
+        <tr><td><code>staging/echelon/newpkg/Y.class</code></td><td><code>echelon/newpkg/Y.class</code> (root)</td><td><code>INCLUDE</code></td></tr>
+      </tbody>
+    </table>
+    <p>Returns the count of classes deployed. Empty staging directories are cleaned up automatically. Manifest is saved after the batch.</p>
+<pre data-lang="Java"><code><span class="cm">// Workflow: snapshot → stage → absorb → restart</span>
+<span class="ty">String</span> snap = vortex.<span class="fn">createSnapshot</span>(<span class="str">"pre-2.0"</span>);
+<span class="cm">// ... drop files into staging/ ...</span>
+<span class="kw">int</span> count = vortex.<span class="fn">absorbFromStaging</span>();
+System.out.println(<span class="str">"Staged "</span> + count + <span class="str">" class(es)"</span>);
+vortex.<span class="fn">requestRestart</span>(() -> <span class="ty">EchelonDesktop</span>.<span class="fn">restart</span>());</code></pre>
+  </section>
+
+  <section id="remove">
+    <h2>remove() &amp; purgeAll()</h2>
+    <p><code>remove(className)</code> looks up the manifest entry, deletes the file on disk, removes the entry, saves the manifest, and — if it was a JAR — calls <code>rescanJars()</code>. Empty package directories are cleaned up after loose-class removals.</p>
+    <p><code>purgeAll()</code> calls <code>remove()</code> for every manifest entry in sequence. Returns the count of successfully removed entries. After a purge, the next restart will use the original JAR for all classes.</p>
+  </section>
+
+  <section id="snapshots">
+    <h2>Snapshots &amp; Rollback</h2>
+    <p>Snapshots capture the current state of all overrides and includes so you can roll back if an update breaks something.</p>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>createSnapshot(String label)</code></td><td>Copies <code>system/</code>, root includes, and <code>vortex_manifest.json</code> into <code>snapshots/label_timestamp/</code>. Returns the snapshot ID.</td></tr>
+        <tr><td><code>restoreSnapshot(String id)</code></td><td>Clears current overrides/includes and restores from the snapshot. Requires restart to take effect.</td></tr>
+        <tr><td><code>deleteSnapshot(String id)</code></td><td>Removes the snapshot directory permanently.</td></tr>
+        <tr><td><code>listSnapshots()</code></td><td>Returns a sorted list of snapshot IDs.</td></tr>
+      </tbody>
+    </table>
+<pre data-lang="Java"><code><span class="cm">// Snapshot → deploy → rollback if needed</span>
+<span class="ty">String</span> snap = vortex.<span class="fn">createSnapshot</span>(<span class="str">"pre-hotfix"</span>);
+vortex.<span class="fn">deployJar</span>(hotfixPath, <span class="ty">VortexEntry</span>.Type.SYSTEM, <span class="str">"1.5.0"</span>);
+
+<span class="cm">// Something broke?</span>
+vortex.<span class="fn">restoreSnapshot</span>(snap);
+vortex.<span class="fn">requestRestart</span>(() -> <span class="ty">EchelonDesktop</span>.<span class="fn">restart</span>());</code></pre>
+  </section>
+
+  <section id="restart">
+    <h2>Restart</h2>
+    <p><code>requestRestart(Runnable)</code> logs the restart intent and immediately calls the provided callback — it does not itself restart the process. The callback is typically <code>EchelonDesktop.restart()</code> or an equivalent app-specific restart routine.</p>
+    <p><code>isRestartNeeded()</code> returns <code>true</code> if any <code>.class</code> files remain in <code>staging/</code> — a signal that staged changes are waiting to be absorbed and activated.</p>
+  </section>
+
+  <section id="query">
+    <h2>Query API</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>getInstance()</code></td><td><code>VortexManager</code></td><td>Singleton accessor. <code>null</code> before <code>initialize()</code>.</td></tr>
+        <tr><td><code>getLoader()</code></td><td><code>VortexLoader</code></td><td>The underlying classloader — use to set a listener or call low-level APIs.</td></tr>
+        <tr><td><code>getManifest()</code></td><td><code>Map&lt;String,VortexEntry&gt;</code></td><td>Immutable copy of the full manifest.</td></tr>
+        <tr><td><code>getSystemOverrideNames()</code></td><td><code>List&lt;String&gt;</code></td><td>Class names with <code>SYSTEM</code> type entries in the manifest.</td></tr>
+        <tr><td><code>getIncludeNames()</code></td><td><code>List&lt;String&gt;</code></td><td>Class names with <code>INCLUDE</code> type entries in the manifest.</td></tr>
+        <tr><td><code>hasEntry(String)</code></td><td><code>boolean</code></td><td>True if the manifest has an entry for the given class name or jar key.</td></tr>
+        <tr><td><code>getIndexedJarNames()</code></td><td><code>List&lt;String&gt;</code></td><td>Delegates to <code>VortexLoader.getIndexedJarNames()</code>.</td></tr>
+        <tr><td><code>getVortexRoot()</code> · <code>getSystemDir()</code> · <code>getStagingDir()</code></td><td><code>Path</code></td><td>Resolved filesystem paths to the main directories.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── INNER: VortexEntry ── -->
+  <div class="class-divider" id="vortex-entry">
+    <span class="class-divider-badge">public static inner class</span>
+    <h2>VortexEntry</h2>
+  </div>
+
+  <section id="entry-fields">
+    <h2>Fields</h2>
+    <p>The manifest record for a single deployed class or JAR. Serialized to / deserialized from <code>vortex_manifest.json</code> using a hand-rolled parser (no external JSON library).</p>
+    <table class="data-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>className</code></td><td><code>String</code></td><td>Fully-qualified class name, or <code>jar:filename.jar</code> for JAR entries.</td></tr>
+        <tr><td><code>version</code></td><td><code>String</code></td><td>Version label provided at deploy time. <code>"staged"</code> for staging-absorbed classes.</td></tr>
+        <tr><td><code>type</code></td><td><code>Type</code></td><td><code>SYSTEM</code> (override) or <code>INCLUDE</code> (new class).</td></tr>
+        <tr><td><code>deployedAt</code></td><td><code>String</code></td><td>ISO-8601 instant string of when the entry was deployed.</td></tr>
+        <tr><td><code>filePath</code></td><td><code>String</code></td><td>Path relative to <code>vortexRoot</code> — used by <code>remove()</code> to locate the file.</td></tr>
+        <tr><td><code>sizeBytes</code></td><td><code>int</code></td><td>File size in bytes at deploy time.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="entry-type">
+    <h2>Type enum</h2>
+    <table class="data-table">
+      <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>SYSTEM</code></td><td>Deployed to <code>system/</code>. Replaces an existing JAR class.</td></tr>
+        <tr><td><code>INCLUDE</code></td><td>Deployed to the vortex root. Adds a class that must not already exist in the JAR.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+</div>
+</body>
+</html>

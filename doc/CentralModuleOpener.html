@@ -518,6 +518,10 @@
         <a href="#java-version">Java Version</a>
       </div>
 
+      <span class="nav-section">Vortex Integration</span>
+      <a href="#vortex-integration">Overview</a>
+      <a href="#classloader-chain">Loader chain</a>
+      <a href="#vortex-classpath">Classpath wiring</a>
       <span class="nav-section">Inner Classes</span>
       <div class="nav-group">
         <a href="#module-data">ModuleData</a>
@@ -534,7 +538,7 @@
 
     <!-- Hero -->
     <div class="hero" id="overview">
-      <div class="hero-badge">TRITON-80 · Core</div>
+      <div class="hero-badge">triton.desktop.core</div>
       <h1>CentralModuleOpener</h1>
       <div class="hero-meta">
         <span>Package <code>triton.desktop.core</code></span>
@@ -553,7 +557,7 @@
         &nbsp;&nbsp;<span class="dir">├── src/</span><span class="note">Java source files (compiled to bin/)</span><br>
         &nbsp;&nbsp;<span class="dir">├── Main.java</span><span class="note">Must extend AbstractModule</span><br>
         &nbsp;&nbsp;<span class="dir">├── lib/</span><span class="note">Optional JARs added to classpath</span><br>
-        &nbsp;&nbsp;<span class="dir">├── mod/</span><span class="note">Class override sources (TRITON-80)</span><br>
+        &nbsp;&nbsp;<span class="dir">├── mod/</span><span class="note">Class override sources — mod system</span><br>
         &nbsp;&nbsp;<span class="dir">├── bin/</span><span class="note">Compiled output (auto-created)</span><br>
         &nbsp;&nbsp;<span class="dir">├── mod-bin/</span><span class="note">Compiled mod overrides (auto-created)</span><br>
         &nbsp;&nbsp;<span class="dir">└── module.properties</span><span class="note">Optional — e.g. java.version=17</span>
@@ -668,7 +672,46 @@ m.put(<span class="str">"eadgyth120"</span>, <span class="str">"launch-eadgyth12
     <!-- ══════════════════════════════════ -->
     <!--  INNER CLASS: ModuleData           -->
     <!-- ══════════════════════════════════ -->
-    <div class="class-divider" id="module-data">
+    <!-- ── VORTEX INTEGRATION ── -->
+    <section id="vortex-integration">
+      <h2>Vortex Integration</h2>
+      <p>When <a href="VortexManager.html" style="color:#f97316;text-decoration:none"><code>VortexManager</code></a> is initialized, <code>CentralModuleOpener</code> automatically routes all module classloading through <a href="VortexLoader.html" style="color:#f97316;text-decoration:none"><code>VortexLoader</code></a> as the parent. This means every module that gets compiled and loaded via <code>open-module</code> transparently sees all absorbed system overrides and included classes without any changes to module code.</p>
+      <div style="background:#0d1117;border:1px solid #232840;border-radius:10px;padding:1.75rem;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.83rem">
+        <div style="color:#6b7280;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem">Classloader chain</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:6px;padding:.65rem 1rem;color:#fdba74"><code>ModuleFirstClassLoader</code> <span style="color:#4b5563">— mod-bin/ → bin/ → lib/</span></div>
+          <div style="padding-left:1.5rem;color:#4b5563;font-size:.8rem">↓ parent</div>
+          <div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.2);border-radius:6px;padding:.65rem 1rem;color:#fdba74"><code>VortexLoader</code> <span style="color:#4b5563">— system/ overrides → root includes</span></div>
+          <div style="padding-left:1.5rem;color:#4b5563;font-size:.8rem">↓ parent</div>
+          <div style="background:rgba(255,255,255,.04);border:1px solid #232840;border-radius:6px;padding:.65rem 1rem;color:#8b92b8">App ClassLoader <span style="color:#4b5563">— JAR</span></div>
+          <div style="padding-left:1.5rem;color:#4b5563;font-size:.8rem">↓ parent</div>
+          <div style="background:rgba(255,255,255,.02);border:1px solid #1a1f30;border-radius:6px;padding:.65rem 1rem;color:#5a6080">JDK Bootstrap</div>
+        </div>
+      </div>
+      <p>Without Vortex: <code>ModuleFirstClassLoader → App ClassLoader → JDK</code>. The chain change is fully automatic — CMO calls <code>resolveParentClassLoader()</code> on each module launch which returns the <code>VortexLoader</code> if present, otherwise falls back to the app classloader.</p>
+    </section>
+
+    <section id="classloader-chain">
+      <h2>Loader Chain</h2>
+      <p><code>resolveParentClassLoader()</code> is called once per <code>open-module</code> launch. It calls <code>VortexManager.getInstance()</code> — if non-null, the <code>VortexLoader</code> is used as the parent for the new <code>ModuleFirstClassLoader</code>. A log line confirms which path was taken: <em>"Vortex active — modules will chain through VortexLoader"</em> or the fallback silently uses the app classloader.</p>
+    </section>
+
+    <section id="vortex-classpath">
+      <h2>Classpath Wiring</h2>
+      <p>Two additional wiring points ensure modules can reference Vortex classes both at <strong>compile time</strong> and at <strong>runtime</strong>:</p>
+      <table style="width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem">
+        <thead><tr style="border-bottom:1px solid #232840">
+          <th style="text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#6b7280;padding:.75rem 1rem">Method</th>
+          <th style="text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#6b7280;padding:.75rem 1rem">What it does</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:.9rem 1rem;border-bottom:1px solid #1a1f30;vertical-align:top"><code>appendVortexToClasspath(cp)</code></td><td style="padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:#d4d8f0">Appends <code>system/</code> and the vortex root to the <code>-cp</code> string passed to the Java compiler (JDK or ECJ). Module source files can <code>import</code> Vortex-included types and have them resolve during compilation.</td></tr>
+          <tr><td style="padding:.9rem 1rem;vertical-align:top"><code>getVortexClasspathURLs()</code></td><td style="padding:.9rem 1rem;color:#d4d8f0">Returns <code>URL[]</code> entries for <code>system/</code> and the vortex root, added to the <code>URLClassLoader</code> search path. This lets <code>Class.forName()</code> and resource lookups inside the module find Vortex classes at runtime too.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+        <div class="class-divider" id="module-data">
       <span class="class-divider-badge badge-inner">static inner class</span>
       <h2>ModuleData</h2>
     </div>
@@ -705,7 +748,7 @@ m.put(<span class="str">"eadgyth120"</span>, <span class="str">"launch-eadgyth12
         <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Core packages</strong> (<code>java.*</code>, <code>javax.*</code>, <code>shared.*</code>) — always delegates to parent. Never overridable.</div></div>
         <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Mod override check</strong> — if a matching <code>.class</code> exists in <code>mod-bin/</code>, the parent class's <code>@ModProtection</code> annotation is consulted before loading. See policy table below.</div></div>
         <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Module bin/</strong> — tries loading from the module's own compiled output.</div></div>
-        <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Parent</strong> — falls back to the application classloader.</div></div>
+        <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Parent</strong> — if <a href="VortexManager.html" style="color:#f97316;text-decoration:none"><code>VortexLoader</code></a> is active, falls through to it first (which checks system/ overrides and root includes), then to the app JAR. Without Vortex, delegates directly to the app classloader.</div></div>
       </div>
 
       <h3>@ModProtection policy at load time</h3>

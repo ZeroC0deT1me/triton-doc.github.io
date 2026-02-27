@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VortexLoader — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117;--vortex:#f97316}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2}
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:.15em .55em;color:var(--vortex);background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.25)}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--vortex)}
+  nav a.inner{font-size:.78rem;padding-left:1.5rem;color:#5a6080}
+  nav a.inner::before{content:'↳';font-size:.7rem;color:var(--border)}
+  nav a.inner:hover{color:#8b92b8;border-left-color:var(--accent2)}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--vortex);background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--vortex);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:660px}
+  .class-divider{display:flex;align-items:center;gap:1rem;margin:4rem 0 2rem;padding-top:3rem;border-top:1px solid var(--border)}
+  .class-divider-badge{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.25em .7em;border-radius:4px;white-space:nowrap;flex-shrink:0;background:rgba(167,139,250,.12);color:var(--accent2);border:1px solid rgba(167,139,250,.25)}
+  .class-divider h2{font-size:1.5rem;font-weight:800;color:#fff;margin:0}
+  .class-divider h2::after{display:none}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}.iface{color:#4ade80}.vx{color:#f97316}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .callout-danger{background:rgba(239,68,68,.08);border-color:var(--danger);color:#fca5a5}
+  .callout-vortex{background:rgba(249,115,22,.08);border-color:var(--vortex);color:#fdba74}
+  .data-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .data-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .data-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .data-table tr:last-child td{border-bottom:none}
+  .data-table tr:hover td{background:var(--surface2)}
+  .flow{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.75rem;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.83rem}
+  .flow-step{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.2rem;position:relative}
+  .flow-step:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;width:1px;height:calc(100% - 6px);background:var(--border)}
+  .flow-num{flex-shrink:0;width:27px;height:27px;border-radius:50%;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.4);color:var(--vortex);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;z-index:1}
+  .flow-content{padding-top:3px;line-height:1.65;color:var(--text)}
+  .flow-content strong{color:#fff;font-weight:600}
+  .dir-tree{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;font-family:'DM Mono',monospace;font-size:.83rem;color:#e2e8f0;margin:1.25rem 0;line-height:2}
+  .dir{color:#67e8f9}.note{color:#4b5563;font-style:italic;font-size:.78rem}
+  aside::-webkit-scrollbar{width:4px}
+  aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr};aside{position:relative;height:auto};main{padding:2rem 1.5rem};h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">echelon.module.vortex</div>
+    <div class="sidebar-classname">VortexLoader</div>
+    <span class="sidebar-kind">ClassLoader</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+    <a href="#directory-layout">Directory layout</a>
+    <span class="nav-section">Load Order</span>
+    <a href="#load-order">Load order</a>
+    <a href="#parent-first">Parent-first packages</a>
+    <span class="nav-section">Override (system/)</span>
+    <a href="#absorb">Absorb from system/</a>
+    <a href="#locked">Locked classes</a>
+    <span class="nav-section">Include (root)</span>
+    <a href="#include">Include from root</a>
+    <a href="#include-conflict">Conflict rejection</a>
+    <span class="nav-section">JAR support</span>
+    <a href="#jar-indexing">JAR indexing</a>
+    <a href="#rescan">rescanJars()</a>
+    <span class="nav-section">Public API</span>
+    <a href="#query-api">Query API</a>
+    <a href="#listener">VortexListener</a>
+    <span class="nav-section">Inner types</span>
+    <a href="#jar-source">JarSource</a>
+    <a href="#vortex-event">VortexEvent</a>
+    <a class="inner" href="#event-values">Event values</a>
+    <a href="#vortex-listener-iface">VortexListener</a>
+  </nav>
+</aside>
+<main>
+
+  <div class="hero" id="overview">
+    <div class="hero-badge">echelon.module.vortex</div>
+    <h1>VortexLoader</h1>
+    <div class="hero-meta">
+      <span>Package <code>echelon.module.vortex</code></span>
+      <span>Extends <code>ClassLoader</code></span>
+      <span>Managed by <a href="VortexManager.html" style="color:var(--vortex);text-decoration:none">VortexManager</a></span>
+    </div>
+    <p class="hero-desc">Custom <code>ClassLoader</code> that intercepts every class load and checks the Vortex directories first. Supports two modes: <strong>system/ overrides</strong> that silently replace existing JAR classes, and <strong>root includes</strong> that add brand-new classes the JAR doesn't contain. Both loose <code>.class</code> files and <code>.jar</code> bundles are supported in each mode.</p>
+  </div>
+
+  <section id="directory-layout">
+    <h2>Directory Layout</h2>
+    <div class="dir-tree">
+      <span class="dir">echo/vortex-module/</span><br>
+      &nbsp;&nbsp;├── <span class="dir">system/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← OVERRIDE existing JAR classes</span><br>
+      &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="dir">echelon/ui/</span><br>
+      &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── WindowManager.class&nbsp;&nbsp;&nbsp;<span class="note">← loose override</span><br>
+      &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── hotfix-1.5.jar&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← JAR of overrides</span><br>
+      &nbsp;&nbsp;├── <span class="dir">echelon/newfeature/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← INCLUDE new classes only</span><br>
+      &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── CoolWidget.class<br>
+      &nbsp;&nbsp;├── new-feature-pack.jar&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← JAR of includes (new only)</span><br>
+      &nbsp;&nbsp;├── <span class="dir">staging/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← managed by VortexManager</span><br>
+      &nbsp;&nbsp;├── <span class="dir">snapshots/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← managed by VortexManager</span><br>
+      &nbsp;&nbsp;└── vortex_manifest.json
+    </div>
+    <div class="callout callout-vortex">
+      <strong>Two zones, two rules</strong>
+      Anything in <code>system/</code> can replace a class that already exists in the JAR. Anything in the root (outside <code>system/</code>, <code>staging/</code>, <code>snapshots/</code>) can only add classes that do <em>not</em> already exist — attempting to shadow a JAR class from the root is rejected with an error.
+    </div>
+  </section>
+
+  <section id="load-order">
+    <h2>Load Order</h2>
+    <p>On every <code>loadClass()</code> call, <code>VortexLoader</code> walks this chain and returns the first match:</p>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Already-loaded cache</strong> — <code>findLoadedClass()</code>. JVM guarantees at most one definition per name per loader.</div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Parent-first packages</strong> — <code>java.*</code>, <code>javax.*</code>, <code>sun.*</code>, <code>jdk.*</code>, and <code>echelon.module.vortex.*</code> are always delegated to the parent. Vortex cannot absorb itself.</div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Locked set</strong> — classes explicitly added via <code>lockClass()</code> or carrying <code>@Vortexable(LOCKED)</code> delegate to parent.</div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>system/ — loose .class</strong> then <strong>system/ JARs</strong>. If found, the override is defined and returned. Checks <code>@Vortexable(LOCKED)</code> on the parent version first.</div></div>
+      <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>root — loose .class</strong> then <strong>root JARs</strong>. Only accepted if the class does NOT exist in the parent (app JAR). Rejects with a descriptive error otherwise.</div></div>
+      <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Parent classloader</strong> — the app JAR / IDE classpath. Final fallback.</div></div>
+    </div>
+  </section>
+
+  <section id="parent-first">
+    <h2>Parent-First Packages</h2>
+    <p>These prefixes always bypass Vortex and go straight to the parent loader:</p>
+    <table class="data-table">
+      <thead><tr><th>Prefix</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><td><code>java.</code> · <code>javax.</code> · <code>sun.</code> · <code>jdk.</code></td><td>JVM bootstrap — overriding these would break the runtime.</td></tr>
+        <tr><td><code>echelon.module.vortex.</code></td><td>Vortex cannot absorb itself — would create a circular dependency.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="absorb">
+    <h2>Absorb from system/</h2>
+    <p>Loose <code>.class</code> files are checked first (path resolved as <code>system/a/b/C.class</code>). If not found as a loose file, indexed system JARs are checked. The first match wins — first loose, first JAR.</p>
+    <p>Before defining the override, <code>VortexLoader</code> loads the original class via the parent and inspects it for <code>@Vortexable(LOCKED)</code>. If locked, the class is added to the in-memory locked set, the event <code>REJECTED_LOCKED</code> is fired, and the parent version is used instead.</p>
+  </section>
+
+  <section id="locked">
+    <h2>Locked Classes</h2>
+    <p>A class is locked from absorption by either:</p>
+    <ul style="padding-left:1.5rem;font-family:'DM Mono',monospace;font-size:.9rem;color:var(--text);line-height:2.2">
+      <li>Annotating the original with <code>@Vortexable(Vortexable.Policy.LOCKED)</code></li>
+      <li>Calling <code>vortexLoader.lockClass("fully.qualified.ClassName")</code> programmatically</li>
+    </ul>
+    <div class="callout callout-danger">
+      <strong>Always lock security-critical classes</strong>
+      <code>VortexLoader</code>, <code>VortexManager</code>, and any authentication or cryptographic classes should be marked <code>LOCKED</code>. Otherwise a malicious <code>system/</code> file could replace them.
+    </div>
+<pre data-lang="Java"><code><span class="an">@Vortexable</span>(<span class="ty">Vortexable</span>.Policy.LOCKED)
+<span class="kw">public class</span> <span class="ty">SecurityCore</span> { ... }</code></pre>
+  </section>
+
+  <section id="include">
+    <h2>Include from root</h2>
+    <p>Loose <code>.class</code> files anywhere in the vortex root (but not inside <code>system/</code>, <code>staging/</code>, or <code>snapshots/</code>) are treated as includes — new classes being added to the runtime. Root JARs follow the same rule.</p>
+    <p>Unlike system overrides, includes are additive only. <code>VortexLoader</code> calls <code>existsInParent()</code> before defining the class — if the parent already knows this name, the include is rejected.</p>
+  </section>
+
+  <section id="include-conflict">
+    <h2>Include Conflict Rejection</h2>
+    <p>When a root include conflicts with an existing parent class, <code>VortexLoader</code> logs a descriptive error pointing the developer to the correct fix:</p>
+<pre data-lang="log"><code>[Vortex] REJECTED INCLUDE — class already exists in app JAR: echelon.ui.WindowManager
+         Source: new-feature-pack.jar
+         Use system/ directory to override existing classes.
+         Root is for NEW classes only.</code></pre>
+    <p>The event <code>REJECTED_INCLUDE_CONFLICT</code> is also fired on the registered <code>VortexListener</code>.</p>
+  </section>
+
+  <section id="jar-indexing">
+    <h2>JAR Indexing</h2>
+    <p>At construction, <code>VortexLoader</code> scans for JARs and builds two in-memory indexes (<code>ConcurrentHashMap&lt;String, JarSource&gt;</code>):</p>
+    <table class="data-table">
+      <thead><tr><th>Index</th><th>Scanned from</th><th>Scan depth</th><th>Rules on load</th></tr></thead>
+      <tbody>
+        <tr><td><code>systemJarIndex</code></td><td><code>system/</code></td><td>Recursive</td><td>Override — replaces existing</td></tr>
+        <tr><td><code>includeJarIndex</code></td><td>Root (top-level only)</td><td>Flat — skips <code>system/</code>, <code>staging/</code>, <code>snapshots/</code></td><td>Include — new classes only</td></tr>
+      </tbody>
+    </table>
+    <p>First JAR wins for duplicate class names within the same index. Open <code>JarFile</code> handles are kept alive in a synchronized list and closed on <code>close()</code> or <code>rescanJars()</code>.</p>
+  </section>
+
+  <section id="rescan">
+    <h2>rescanJars()</h2>
+    <p>Clears both JAR indexes, closes all open handles, then re-runs <code>indexJars()</code>. Call this after deploying new JARs via <code>VortexManager.deployJar()</code> to make the loader aware of them immediately — though already-loaded classes require a full restart to pick up changes.</p>
+  </section>
+
+  <section id="query-api">
+    <h2>Public Query API</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>getAbsorbedClasses()</code></td><td><code>Map&lt;String,String&gt;</code></td><td>className → source description for all absorbed overrides.</td></tr>
+        <tr><td><code>getIncludedClasses()</code></td><td><code>Map&lt;String,String&gt;</code></td><td>className → source description for all includes.</td></tr>
+        <tr><td><code>isAbsorbed(String)</code></td><td><code>boolean</code></td><td>True if the class was loaded as a system override.</td></tr>
+        <tr><td><code>isIncluded(String)</code></td><td><code>boolean</code></td><td>True if the class was loaded as a root include.</td></tr>
+        <tr><td><code>getTotalVortexCount()</code></td><td><code>int</code></td><td>Total absorbed + included classes.</td></tr>
+        <tr><td><code>getSystemJarClassCount()</code></td><td><code>int</code></td><td>Classes indexed from system JARs.</td></tr>
+        <tr><td><code>getIncludeJarClassCount()</code></td><td><code>int</code></td><td>Classes indexed from root JARs.</td></tr>
+        <tr><td><code>getIndexedJarNames()</code></td><td><code>List&lt;String&gt;</code></td><td>Filenames of all indexed JARs (prefixed with <code>system/</code> for system JARs).</td></tr>
+        <tr><td><code>lockClass(String)</code></td><td><code>void</code></td><td>Programmatically prevent a class from being absorbed.</td></tr>
+        <tr><td><code>getSystemDir()</code> · <code>getIncludeRoot()</code></td><td><code>Path</code></td><td>Resolved paths to the two scan roots.</td></tr>
+        <tr><td><code>setListener(VortexListener)</code></td><td><code>void</code></td><td>Register an event listener for absorption/rejection events.</td></tr>
+        <tr><td><code>rescanJars()</code></td><td><code>void</code></td><td>Re-index JARs after a new one is deployed.</td></tr>
+        <tr><td><code>close()</code></td><td><code>void</code></td><td>Close all open JAR file handles. Call on shutdown.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── INNER: JarSource ── -->
+  <div class="class-divider" id="jar-source">
+    <span class="class-divider-badge">private static inner class</span>
+    <h2>JarSource</h2>
+  </div>
+  <section>
+    <p>Lightweight record that pairs an open <code>JarFile</code> handle with a specific entry path. Created once per class entry during <code>indexJars()</code> and stored in the index maps. <code>readBytes()</code> streams the entry on demand — not pre-loaded into memory.</p>
+    <table class="data-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>jarFile</code></td><td><code>JarFile</code></td><td>Open JAR handle (shared across all entries in the same JAR).</td></tr>
+        <tr><td><code>entryName</code></td><td><code>String</code></td><td>Slash-separated path inside the JAR, e.g. <code>echelon/ui/WindowManager.class</code>.</td></tr>
+        <tr><td><code>jarPath</code></td><td><code>Path</code></td><td>Filesystem path to the JAR — used in log messages and source descriptions.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── INNER: VortexEvent ── -->
+  <div class="class-divider" id="vortex-event">
+    <span class="class-divider-badge">public enum</span>
+    <h2>VortexEvent</h2>
+  </div>
+  <section id="event-values">
+    <p>Fired on the registered <code>VortexListener</code> for every load outcome.</p>
+    <table class="data-table">
+      <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>ABSORBED</code></td><td>Class was successfully loaded from <code>system/</code> as an override.</td></tr>
+        <tr><td><code>INCLUDED</code></td><td>New class successfully loaded from the root include area.</td></tr>
+        <tr><td><code>REJECTED_LOCKED</code></td><td>Override refused — original class is annotated <code>@Vortexable(LOCKED)</code>.</td></tr>
+        <tr><td><code>REJECTED_INCLUDE_CONFLICT</code></td><td>Include refused — class already exists in the app JAR.</td></tr>
+        <tr><td><code>FAILED</code></td><td>File or JAR entry exists but could not be read or parsed (<code>IOException</code> / <code>ClassFormatError</code>).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── INNER: VortexListener ── -->
+  <div class="class-divider" id="vortex-listener-iface">
+    <span class="class-divider-badge">public functional interface</span>
+    <h2>VortexListener</h2>
+  </div>
+  <section>
+    <p>A <code>@FunctionalInterface</code> for observing load events. Register via <code>VortexLoader.setListener()</code>. Only one listener is held at a time — registering a new one replaces the previous.</p>
+<pre data-lang="Java"><code>vortex.<span class="fn">getLoader</span>().<span class="fn">setListener</span>((className, event) -> {
+    <span class="kw">switch</span> (event) {
+        <span class="kw">case</span> ABSORBED  -> System.out.println(<span class="str">"Absorbed: "</span> + className);
+        <span class="kw">case</span> INCLUDED  -> System.out.println(<span class="str">"Included: "</span> + className);
+        <span class="kw">case</span> REJECTED_LOCKED ->
+            System.out.println(<span class="str">"Sealed (not overridden): "</span> + className);
+        <span class="kw">case</span> REJECTED_INCLUDE_CONFLICT ->
+            System.out.println(<span class="str">"Include conflict: "</span> + className);
+        <span class="kw">case</span> FAILED    -> System.err.println(<span class="str">"Load failed: "</span> + className);
+    }
+});</code></pre>
+    <div class="callout callout-info">
+      <strong>Exception safety</strong>
+      Exceptions thrown inside the listener are silently swallowed by <code>notifyListener()</code> to prevent a bad listener from interrupting class loading.
+    </div>
+  </section>
+
+</main>
+</div>
+</body>
+</html>
