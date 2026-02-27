@@ -177,6 +177,55 @@
         "VortexEntry.Type (enum)"
       ],
       "updated": "2026-02-21"
+    },
+    {
+      "id": "vortex-plugin",
+      "title": "VortexPlugin",
+      "package": "echelon.module.vortex",
+      "file": "doc/VortexPlugin.html",
+      "description": "Plugin API core \u2014 VortexPlugin lifecycle interface, VortexAdapter convenience base class, @PluginMeta annotation, and PluginContext dependency injection interface. Covers the onLoad/onEnable/onDisable/onUnload lifecycle, configuration and data persistence, logging, plugin cross-referencing, and the typed service registry.",
+      "tags": [
+        "vortex",
+        "plugin"
+      ],
+      "innerClasses": [
+        "VortexAdapter",
+        "PluginContext",
+        "PluginMeta"
+      ],
+      "updated": "2026-02-26"
+    },
+    {
+      "id": "vortex-plugin-types",
+      "title": "VortexPluginTypes",
+      "package": "echelon.module.vortex",
+      "file": "doc/VortexPluginTypes.html",
+      "description": "Plugin sub-interfaces that extend VortexPlugin \u2014 VortexService for background tasks with start/stop/isRunning, VortexCommand for executable commands that integrate with Troy voice control and the command palette, and VortexComponent for Swing UI widgets embeddable in the desktop. Any combination can be implemented on a single plugin class.",
+      "tags": [
+        "vortex",
+        "plugin"
+      ],
+      "innerClasses": [
+        "VortexService",
+        "VortexCommand",
+        "VortexComponent"
+      ],
+      "updated": "2026-02-26"
+    },
+    {
+      "id": "vortexable",
+      "title": "Vortexable",
+      "package": "echelon.module.vortex",
+      "file": "doc/Vortexable.html",
+      "description": "Runtime annotation controlling whether VortexLoader can override a class. Default policy is ABSORBABLE (opt-out model). LOCKED seals a class against absorption \u2014 checked reflectively on first load. INCLUDE marks a class as purely additive (enforced at directory level by VortexLoader). Distinct from @ModProtection which operates at the module level.",
+      "tags": [
+        "vortex",
+        "annotation"
+      ],
+      "innerClasses": [
+        "Policy (enum)"
+      ],
+      "updated": "2026-02-26"
     }
   ]
 }
