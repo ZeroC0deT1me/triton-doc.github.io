@@ -100,11 +100,12 @@
       "title": "CentralModuleOpener",
       "package": "triton.desktop.core",
       "file": "doc/CentralModuleOpener.html",
-      "description": "Central dispatch point for opening any loadable item in the Triton desktop. Handles on-the-fly Java compilation, JAR launching, native execution, and graceful fallback. Inner classes ModuleData and ModuleFirstClassLoader handle data transport and mod-aware class loading respectively.",
+      "description": "Central dispatch for opening any loadable item in the Triton desktop. Compiles and loads Java module directories via JDK or ECJ fallback, handles external JARs, named proxy modules, and native executables. Integrates with VortexManager so modules chain through VortexLoader and see all absorbed overrides and included classes.",
       "tags": [
         "core",
         "modules",
-        "classloader"
+        "classloader",
+        "vortex"
       ],
       "innerClasses": [
         "ModuleData",
@@ -141,6 +142,41 @@
       ],
       "innerClasses": [],
       "updated": "2026-02-20"
+    },
+    {
+      "id": "vortex-loader",
+      "title": "VortexLoader",
+      "package": "echelon.module.vortex",
+      "file": "doc/VortexLoader.html",
+      "description": "Custom ClassLoader that intercepts every class load and checks Vortex directories first. Supports system/ overrides that silently replace existing JAR classes and root includes that add brand-new classes. Supports both loose .class files and .jar bundles. Respects @Vortexable(LOCKED) annotations to protect sealed classes.",
+      "tags": [
+        "vortex",
+        "classloader",
+        "core"
+      ],
+      "innerClasses": [
+        "JarSource",
+        "VortexEvent (enum)",
+        "VortexListener"
+      ],
+      "updated": "2026-02-21"
+    },
+    {
+      "id": "vortex-manager",
+      "title": "VortexManager",
+      "package": "echelon.module.vortex",
+      "file": "doc/VortexManager.html",
+      "description": "Singleton coordinator for the Vortex class-loading system. Manages VortexLoader lifecycle, the vortex-module/ directory structure, manifest persistence, staging, snapshots, and the programmatic deploy API. Initialize once at app startup before any class you want to override is referenced.",
+      "tags": [
+        "vortex",
+        "classloader",
+        "core"
+      ],
+      "innerClasses": [
+        "VortexEntry",
+        "VortexEntry.Type (enum)"
+      ],
+      "updated": "2026-02-21"
     }
   ]
 }
