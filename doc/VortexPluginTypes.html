@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plugin Sub-Interfaces — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117;--vortex:#f97316;--iface:#4ade80}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2}
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:.15em .55em;color:var(--iface);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25)}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--vortex)}
+  nav a.inner{font-size:.78rem;padding-left:1.5rem;color:#5a6080}
+  nav a.inner::before{content:'↳';font-size:.7rem;color:var(--border)}
+  nav a.inner:hover{color:#8b92b8;border-left-color:var(--accent2)}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--vortex);background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--vortex);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:680px}
+  .class-divider{display:flex;align-items:center;gap:1rem;margin:4rem 0 2rem;padding-top:3rem;border-top:1px solid var(--border)}
+  .class-divider h2{font-size:1.5rem;font-weight:800;color:#fff;margin:0}
+  .class-divider h2::after{display:none}
+  .badge-iface{background:rgba(74,222,128,.12);color:var(--iface);border:1px solid rgba(74,222,128,.25)}
+  .class-divider-badge{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.25em .7em;border-radius:4px;white-space:nowrap;flex-shrink:0}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}.iface{color:#4ade80}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .data-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .data-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .data-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .data-table tr:last-child td{border-bottom:none}
+  .data-table tr:hover td{background:var(--surface2)}
+  aside::-webkit-scrollbar{width:4px}
+  aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr};aside{position:relative;height:auto};main{padding:2rem 1.5rem};h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">echelon.module.vortex</div>
+    <div class="sidebar-classname">Plugin Sub-Interfaces</div>
+    <span class="sidebar-kind">3 interfaces</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+    <a href="#combining">Combining interfaces</a>
+
+    <span class="nav-section">VortexService</span>
+    <a href="#service">Interface</a>
+    <a href="#service-methods">Methods</a>
+    <a href="#service-example">Full example</a>
+
+    <span class="nav-section">VortexCommand</span>
+    <a href="#command">Interface</a>
+    <a href="#command-methods">Methods</a>
+    <a href="#command-example">Full example</a>
+
+    <span class="nav-section">VortexComponent</span>
+    <a href="#component">Interface</a>
+    <a href="#component-methods">Methods</a>
+    <a href="#component-example">Full example</a>
+
+    <span class="nav-section">See also</span>
+    <a href="VortexPlugin.html">Plugin core →</a>
+    <a href="VortexManager.html">VortexManager →</a>
+  </nav>
+</aside>
+<main>
+
+  <div class="hero" id="overview">
+    <div class="hero-badge">echelon.module.vortex</div>
+    <h1>Plugin Sub-Interfaces</h1>
+    <div class="hero-meta">
+      <span>Package <code>echelon.module.vortex</code></span>
+      <span>3 interfaces — all extend <code>VortexPlugin</code></span>
+    </div>
+    <p class="hero-desc">Three specialised interfaces let plugins declare what kind of capability they provide. All extend <a href="VortexPlugin.html" style="color:var(--vortex);text-decoration:none"><code>VortexPlugin</code></a> — so they carry the full four-method lifecycle — and each adds a focused contract: background task management, command execution, or Swing UI provision. A single plugin class can implement any combination.</p>
+  </div>
+
+  <section id="combining">
+    <h2>Combining Interfaces</h2>
+    <p>Sub-interfaces compose freely. A plugin that serves as both a background service and an executable command just implements both:</p>
+<pre data-lang="Java"><code><span class="an">@PluginMeta</span>(id = <span class="str">"health-cmd"</span>, name = <span class="str">"Health Monitor + Command"</span>)
+<span class="kw">public class</span> <span class="ty">HealthPlugin</span> <span class="kw">extends</span> <span class="ty">VortexAdapter</span>
+        <span class="kw">implements</span> <span class="iface">VortexService</span>, <span class="iface">VortexCommand</span> {
+
+    <span class="cm">// VortexService</span>
+    <span class="an">@Override</span> <span class="kw">public void</span> start()        { <span class="cm">/* start scheduler */</span> }
+    <span class="an">@Override</span> <span class="kw">public void</span> stop()         { <span class="cm">/* stop scheduler */</span> }
+    <span class="an">@Override</span> <span class="kw">public boolean</span> isRunning() { <span class="kw">return</span> <span class="cm">/* ... */</span>; }
+
+    <span class="cm">// VortexCommand</span>
+    <span class="an">@Override</span> <span class="kw">public</span> <span class="ty">String</span> getCommandName()  { <span class="kw">return</span> <span class="str">"health"</span>; }
+    <span class="an">@Override</span> <span class="kw">public</span> <span class="ty">String</span> getDescription()   { <span class="kw">return</span> <span class="str">"Check system health"</span>; }
+    <span class="an">@Override</span> <span class="kw">public boolean</span> execute(<span class="ty">String</span>[] args) {
+        ctx().log(<span class="str">"Health: "</span> + (isRunning() ? <span class="str">"OK"</span> : <span class="str">"STOPPED"</span>));
+        <span class="kw">return true</span>;
+    }
+}</code></pre>
+    <div class="callout callout-info">
+      <strong>VortexAdapter is optional</strong>
+      You can implement sub-interfaces directly from <code>VortexPlugin</code> without extending <code>VortexAdapter</code>. Use <code>VortexAdapter</code> to get the no-op defaults and the <code>ctx()</code> accessor for free.
+    </div>
+  </section>
+
+  <!-- ══ VORTEX SERVICE ══ -->
+  <div class="class-divider" id="service">
+    <span class="class-divider-badge badge-iface">public interface</span>
+    <h2>VortexService</h2>
+  </div>
+
+  <section>
+    <p>A plugin that runs as a long-lived background task. Intended for watchers, monitors, schedulers, polling loops, embedded servers, and anything that has an independent running state separate from the plugin's enable/disable cycle.</p>
+    <p>The service's <code>start()</code>/<code>stop()</code> lifecycle is independent of <code>onEnable()</code>/<code>onDisable()</code> — the framework may call them separately (e.g., to restart just the service without fully toggling the plugin).</p>
+  </section>
+
+  <section id="service-methods">
+    <h2>Methods</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>start()</code></td><td><code>void</code></td><td>Start the service. Typically called by <code>onEnable()</code> but may be invoked independently. Should be idempotent or guard against double-start.</td></tr>
+        <tr><td><code>stop()</code></td><td><code>void</code></td><td>Stop the service. Typically called by <code>onDisable()</code>. Should cleanly shut down threads, executors, or sockets.</td></tr>
+        <tr><td><code>isRunning()</code></td><td><code>boolean</code></td><td>Returns <code>true</code> if the service is currently active. Used by the framework and monitoring tools to display status.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="service-example">
+    <h2>Full Example</h2>
+<pre data-lang="Java"><code><span class="an">@PluginMeta</span>(id = <span class="str">"health-monitor"</span>, name = <span class="str">"Health Monitor"</span>,
+             description = <span class="str">"Polls system stats every 30 seconds"</span>)
+<span class="kw">public class</span> <span class="ty">HealthMonitor</span> <span class="kw">extends</span> <span class="ty">VortexAdapter</span> <span class="kw">implements</span> <span class="iface">VortexService</span> {
+
+    <span class="kw">private</span> ScheduledExecutorService scheduler;
+
+    <span class="an">@Override</span> <span class="kw">public void</span> onEnable()  { start(); }
+    <span class="an">@Override</span> <span class="kw">public void</span> onDisable() { stop(); }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> start() {
+        <span class="kw">if</span> (isRunning()) <span class="kw">return</span>; <span class="cm">// guard against double-start</span>
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(<span class="kw">this</span>::checkHealth, 0, 30, TimeUnit.SECONDS);
+        ctx().log(<span class="str">"Health monitor started"</span>);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> stop() {
+        <span class="kw">if</span> (scheduler != <span class="kw">null</span>) {
+            scheduler.shutdownNow();
+            scheduler = <span class="kw">null</span>;
+        }
+        ctx().log(<span class="str">"Health monitor stopped"</span>);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> isRunning() {
+        <span class="kw">return</span> scheduler != <span class="kw">null</span> && !scheduler.isShutdown();
+    }
+
+    <span class="kw">private void</span> checkHealth() {
+        <span class="cm">// e.g. check memory, CPU, disk...</span>
+    }
+}</code></pre>
+  </section>
+
+  <!-- ══ VORTEX COMMAND ══ -->
+  <div class="class-divider" id="command">
+    <span class="class-divider-badge badge-iface">public interface</span>
+    <h2>VortexCommand</h2>
+  </div>
+
+  <section>
+    <p>A plugin that registers one or more executable commands. Commands integrate with the Troy voice control system, keyboard shortcut bindings, and the command palette UI. The framework discovers all loaded plugins implementing this interface and registers their commands automatically on <code>onEnable()</code>.</p>
+  </section>
+
+  <section id="command-methods">
+    <h2>Methods</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>getCommandName()</code></td><td><code>String</code></td><td>required</td><td>Primary command name, e.g. <code>"screenshot"</code>. Must be unique across all loaded command plugins.</td></tr>
+        <tr><td><code>getAliases()</code></td><td><code>String[]</code></td><td><code>new String[0]</code></td><td>Alternative names that also trigger this command. Return empty array if none needed.</td></tr>
+        <tr><td><code>getDescription()</code></td><td><code>String</code></td><td>required</td><td>Human-readable description shown in help output and command palette UI.</td></tr>
+        <tr><td><code>execute(String[])</code></td><td><code>boolean</code></td><td>required</td><td>Execute the command. <code>args</code> is never null but may be empty. Return <code>true</code> on success, <code>false</code> on failure — the caller may display an error to the user on <code>false</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="command-example">
+    <h2>Full Example</h2>
+<pre data-lang="Java"><code><span class="an">@PluginMeta</span>(id = <span class="str">"screenshot-cmd"</span>, name = <span class="str">"Screenshot Command"</span>,
+             description = <span class="str">"Takes a screenshot on demand"</span>)
+<span class="kw">public class</span> <span class="ty">ScreenshotCmd</span> <span class="kw">extends</span> <span class="ty">VortexAdapter</span> <span class="kw">implements</span> <span class="iface">VortexCommand</span> {
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> getCommandName() { <span class="kw">return</span> <span class="str">"screenshot"</span>; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span>[] getAliases() { <span class="kw">return new</span> <span class="ty">String</span>[]{ <span class="str">"capture"</span>, <span class="str">"snap"</span> }; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">String</span> getDescription() { <span class="kw">return</span> <span class="str">"Takes a screenshot of the desktop"</span>; }
+
+    <span class="an">@Override</span>
+    <span class="kw">public boolean</span> execute(<span class="ty">String</span>[] args) {
+        <span class="kw">try</span> {
+            <span class="ty">Robot</span> robot = <span class="kw">new</span> <span class="ty">Robot</span>();
+            <span class="ty">Rectangle</span> screen = <span class="kw">new</span> <span class="ty">Rectangle</span>(<span class="ty">Toolkit</span>.getDefaultToolkit().getScreenSize());
+            <span class="ty">BufferedImage</span> img = robot.createScreenCapture(screen);
+            <span class="cm">// ... save img ...</span>
+            ctx().log(<span class="str">"Screenshot saved"</span>);
+            <span class="kw">return true</span>;
+        } <span class="kw">catch</span> (<span class="ty">AWTException</span> e) {
+            ctx().error(<span class="str">"Screenshot failed"</span>, e);
+            <span class="kw">return false</span>;
+        }
+    }
+}</code></pre>
+  </section>
+
+  <!-- ══ VORTEX COMPONENT ══ -->
+  <div class="class-divider" id="component">
+    <span class="class-divider-badge badge-iface">public interface</span>
+    <h2>VortexComponent</h2>
+  </div>
+
+  <section>
+    <p>A plugin that provides a Swing <code>JComponent</code> to be embedded in the desktop. Components can appear as widgets in panels, dashboard areas, sidebar tiles, or pop-out dialogs — the host decides where to place them. The plugin is responsible for building and owning the component; the host simply calls <code>getComponent()</code> and embeds the result.</p>
+    <div class="callout callout-warn">
+      <strong>Always on the EDT</strong>
+      <code>getComponent()</code> will be called on the Event Dispatch Thread. Build and store your component in <code>onLoad()</code> (which should also be on or dispatched to the EDT) and return the pre-built instance from <code>getComponent()</code>. Do not create Swing components on background threads.
+    </div>
+  </section>
+
+  <section id="component-methods">
+    <h2>Methods</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>getComponent()</code></td><td><code>JComponent</code></td><td>required</td><td>The Swing component to embed. Called on EDT. Should return the same instance each call — do not create a new component every time.</td></tr>
+        <tr><td><code>getDisplayName()</code></td><td><code>String</code></td><td>required</td><td>Human-readable title shown in the widget list, title bar, or tooltip.</td></tr>
+        <tr><td><code>getPreferredWidth()</code></td><td><code>int</code></td><td><code>-1</code></td><td>Preferred width in pixels. Return <code>-1</code> to let the host decide.</td></tr>
+        <tr><td><code>getPreferredHeight()</code></td><td><code>int</code></td><td><code>-1</code></td><td>Preferred height in pixels. Return <code>-1</code> to let the host decide.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="component-example">
+    <h2>Full Example</h2>
+<pre data-lang="Java"><code><span class="an">@PluginMeta</span>(id = <span class="str">"cpu-widget"</span>, name = <span class="str">"CPU Monitor Widget"</span>,
+             description = <span class="str">"Shows real-time CPU usage"</span>)
+<span class="kw">public class</span> <span class="ty">CpuWidget</span> <span class="kw">extends</span> <span class="ty">VortexAdapter</span> <span class="kw">implements</span> <span class="iface">VortexComponent</span> {
+
+    <span class="kw">private</span> <span class="ty">JPanel</span> panel;
+    <span class="kw">private</span> <span class="ty">JLabel</span> label;
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> onLoad(<span class="ty">PluginContext</span> ctx) {
+        <span class="kw">super</span>.onLoad(ctx);
+        panel = <span class="kw">new</span> <span class="ty">JPanel</span>(<span class="kw">new</span> <span class="ty">BorderLayout</span>());
+        label = <span class="kw">new</span> <span class="ty">JLabel</span>(<span class="str">"CPU: --%"</span>, <span class="ty">SwingConstants</span>.CENTER);
+        panel.add(label, <span class="ty">BorderLayout</span>.CENTER);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> onEnable() {
+        <span class="cm">// Start a timer to update the label every second</span>
+        Timer t = <span class="kw">new</span> <span class="ty">Timer</span>(1000, e -> label.setText(<span class="str">"CPU: "</span> + getCpuUsage() + <span class="str">"%"</span>));
+        t.start();
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> onUnload() { panel = <span class="kw">null</span>; label = <span class="kw">null</span>; }
+
+    <span class="an">@Override</span> <span class="kw">public</span> <span class="ty">JComponent</span> getComponent()    { <span class="kw">return</span> panel; }
+    <span class="an">@Override</span> <span class="kw">public</span> <span class="ty">String</span> getDisplayName()       { <span class="kw">return</span> <span class="str">"CPU Monitor"</span>; }
+    <span class="an">@Override</span> <span class="kw">public int</span> getPreferredWidth()        { <span class="kw">return</span> 200; }
+    <span class="an">@Override</span> <span class="kw">public int</span> getPreferredHeight()       { <span class="kw">return</span> 80; }
+
+    <span class="kw">private int</span> getCpuUsage() { <span class="kw">return</span> <span class="cm">/* implementation */</span> 0; }
+}</code></pre>
+  </section>
+
+</main>
+</div>
+</body>
+</html>

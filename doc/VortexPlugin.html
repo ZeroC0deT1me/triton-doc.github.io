@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VortexPlugin — Triton Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117;--vortex:#f97316;--iface:#4ade80}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:1}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:0 0 2rem;display:flex;flex-direction:column}
+  .back-bar{display:flex;align-items:center;gap:.6rem;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);text-decoration:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;transition:color .15s,background .15s;flex-shrink:0}
+  .back-bar:hover{color:var(--text);background:var(--surface2)}
+  .sidebar-header{padding:1.6rem 1.5rem .5rem;flex-shrink:0}
+  .sidebar-pkg{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+  .sidebar-classname{font-size:1.1rem;font-weight:800;color:#fff;line-height:1.2}
+  .sidebar-kind{display:inline-block;margin-top:.5rem;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:.15em .55em;color:var(--iface);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25)}
+  nav{padding:1rem 1rem 0;flex:1}
+  nav .nav-section{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:1rem .75rem .4rem;display:block}
+  nav a{display:flex;align-items:center;gap:.5rem;padding:.4rem .75rem;border-radius:6px;color:#8b92b8;text-decoration:none;font-size:.84rem;font-family:'DM Mono',monospace;transition:all .15s;border-left:2px solid transparent}
+  nav a:hover{color:var(--text);background:var(--surface2);border-left-color:var(--vortex)}
+  nav a.inner{font-size:.78rem;padding-left:1.5rem;color:#5a6080}
+  nav a.inner::before{content:'↳';font-size:.7rem;color:var(--border)}
+  nav a.inner:hover{color:#8b92b8;border-left-color:var(--accent2)}
+  main{padding:3.5rem 4rem 5rem;max-width:960px}
+  .hero{margin-bottom:3.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+  .hero-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--vortex);background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:100px;padding:.32rem .9rem;margin-bottom:1.3rem;font-family:'DM Mono',monospace}
+  .hero-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--vortex);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  h1{font-size:2.5rem;font-weight:800;color:#fff;line-height:1.1;margin-bottom:.75rem;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+  .hero-meta code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:.1em .45em;color:#a5b4fc;font-size:.82em}
+  .hero-desc{font-size:.975rem;color:var(--muted);font-family:'DM Mono',monospace;font-weight:300;line-height:1.85;max-width:680px}
+  .class-divider{display:flex;align-items:center;gap:1rem;margin:4rem 0 2rem;padding-top:3rem;border-top:1px solid var(--border)}
+  .class-divider h2{font-size:1.5rem;font-weight:800;color:#fff;margin:0}
+  .class-divider h2::after{display:none}
+  .badge-iface{background:rgba(74,222,128,.12);color:var(--iface);border:1px solid rgba(74,222,128,.25)}
+  .badge-class{background:rgba(79,142,247,.12);color:#93c5fd;border:1px solid rgba(79,142,247,.25)}
+  .badge-annotation{background:rgba(251,191,36,.12);color:#fcd34d;border:1px solid rgba(251,191,36,.25)}
+  .class-divider-badge{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:.67rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:.25em .7em;border-radius:4px;white-space:nowrap;flex-shrink:0}
+  section{margin-bottom:3.5rem}
+  h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem}
+  h2::after{content:'';flex:1;height:1px;background:var(--border)}
+  h3{font-size:1.02rem;font-weight:600;color:#b8bfdf;margin:2rem 0 .75rem}
+  p{color:var(--text);margin-bottom:1rem;font-size:.94rem;font-family:'DM Mono',monospace;font-weight:300;line-height:1.85}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.25rem 0;position:relative}
+  pre::before{content:attr(data-lang);position:absolute;top:.75rem;right:1rem;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+  code{font-family:'DM Mono',monospace;font-size:.855rem;line-height:1.7}
+  pre code{color:#e2e8f0}
+  :not(pre)>code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:4px;padding:.1em .4em;font-size:.82em;color:#a5b4fc}
+  .kw{color:#c084fc}.ty{color:#67e8f9}.str{color:#86efac}.cm{color:#4b5563;font-style:italic}.an{color:#fbbf24}.iface{color:#4ade80}.vx{color:#f97316}
+  .callout{border-radius:10px;padding:1.15rem 1.4rem;margin:1.4rem 0;border-left:3px solid;font-family:'DM Mono',monospace;font-size:.875rem;font-weight:300;line-height:1.75}
+  .callout strong{font-weight:600;display:block;margin-bottom:.3rem;text-transform:uppercase;font-size:.68rem;letter-spacing:.12em}
+  .callout-info{background:rgba(79,142,247,.08);border-color:var(--accent);color:#93b8fb}
+  .callout-warn{background:rgba(245,158,11,.08);border-color:var(--warn);color:#fcd34d}
+  .callout-vortex{background:rgba(249,115,22,.08);border-color:var(--vortex);color:#fdba74}
+  .data-table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.84rem}
+  .data-table th{text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+  .data-table td{padding:.9rem 1rem;border-bottom:1px solid #1a1f30;color:var(--text);vertical-align:top}
+  .data-table tr:last-child td{border-bottom:none}
+  .data-table tr:hover td{background:var(--surface2)}
+  .flow{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.75rem;margin:1.4rem 0;font-family:'DM Mono',monospace;font-size:.83rem}
+  .flow-step{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.2rem;position:relative}
+  .flow-step:not(:last-child)::after{content:'';position:absolute;left:13px;top:30px;width:1px;height:calc(100% - 6px);background:var(--border)}
+  .flow-num{flex-shrink:0;width:27px;height:27px;border-radius:50%;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:var(--iface);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;z-index:1}
+  .flow-content{padding-top:3px;line-height:1.65;color:var(--text)}
+  .flow-content strong{color:#fff;font-weight:600}
+  aside::-webkit-scrollbar{width:4px}
+  aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  @media(max-width:768px){.layout{grid-template-columns:1fr};aside{position:relative;height:auto};main{padding:2rem 1.5rem};h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <a class="back-bar" href="../index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> All docs</a>
+  <div class="sidebar-header">
+    <div class="sidebar-pkg">echelon.module.vortex</div>
+    <div class="sidebar-classname">Vortex Plugin API</div>
+    <span class="sidebar-kind">plugin core</span>
+  </div>
+  <nav>
+    <span class="nav-section">Overview</span>
+    <a href="#overview">Overview</a>
+    <a href="#type-hierarchy">Type hierarchy</a>
+    <a href="#quickstart">Quick start</a>
+
+    <span class="nav-section">VortexPlugin</span>
+    <a href="#plugin-interface">Interface</a>
+    <a href="#lifecycle">Lifecycle</a>
+
+    <span class="nav-section">VortexAdapter</span>
+    <a href="#adapter">Abstract class</a>
+    <a href="#adapter-examples">Examples</a>
+
+    <span class="nav-section">@PluginMeta</span>
+    <a href="#plugin-meta">Annotation</a>
+    <a href="#meta-attributes">Attributes</a>
+    <a href="#dependency-ordering">Dependency ordering</a>
+
+    <span class="nav-section">PluginContext</span>
+    <a href="#context">Interface</a>
+    <a href="#context-identity">Identity</a>
+    <a href="#context-fs">File system</a>
+    <a href="#context-config">Configuration</a>
+    <a href="#context-logging">Logging</a>
+    <a href="#context-plugins">Plugin interaction</a>
+    <a href="#context-services">Service registry</a>
+
+    <span class="nav-section">See also</span>
+    <a href="VortexPluginTypes.html">Sub-interfaces →</a>
+    <a href="VortexLoader.html">VortexLoader →</a>
+    <a href="VortexManager.html">VortexManager →</a>
+  </nav>
+</aside>
+<main>
+
+  <!-- ══ HERO ══ -->
+  <div class="hero" id="overview">
+    <div class="hero-badge">echelon.module.vortex</div>
+    <h1>Vortex Plugin API</h1>
+    <div class="hero-meta">
+      <span>Package <code>echelon.module.vortex</code></span>
+      <span>4 types on this page</span>
+    </div>
+    <p class="hero-desc">The plugin API lets external classes loaded via Vortex participate in a managed lifecycle. Plugins are discovered by <a href="VortexManager.html" style="color:var(--vortex);text-decoration:none"><code>VortexManager</code></a>, annotated with <code>@PluginMeta</code>, and interact with the framework exclusively through <code>PluginContext</code> — keeping coupling clean and plugins sandboxed.</p>
+  </div>
+
+  <!-- TYPE HIERARCHY -->
+  <section id="type-hierarchy">
+    <h2>Type Hierarchy</h2>
+    <div class="flow">
+      <div style="font-family:'DM Mono',monospace;font-size:.83rem;line-height:2.2;color:#d4d8f0">
+        <span style="color:var(--iface)">VortexPlugin</span> <span style="color:#4b5563">← base interface — 4 lifecycle methods</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#93c5fd">VortexAdapter</span> <span style="color:#4b5563">← abstract class — no-op defaults, stores ctx()</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--iface)">VortexService</span> <span style="color:#4b5563">← sub-interface — start/stop background tasks</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:var(--iface)">VortexCommand</span> <span style="color:#4b5563">← sub-interface — executable commands</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:var(--iface)">VortexComponent</span> <span style="color:#4b5563">← sub-interface — Swing UI widgets</span><br>
+        <br>
+        <span style="color:#fbbf24">@PluginMeta</span> <span style="color:#4b5563">← required on every plugin class</span><br>
+        <span style="color:var(--iface)">PluginContext</span> <span style="color:#4b5563">← injected into every plugin on onLoad()</span>
+      </div>
+    </div>
+    <p>Sub-interfaces (<code>VortexService</code>, <code>VortexCommand</code>, <code>VortexComponent</code>) are documented on the <a href="VortexPluginTypes.html" style="color:var(--vortex);text-decoration:none">plugin sub-interfaces page</a>.</p>
+  </section>
+
+  <!-- QUICK START -->
+  <section id="quickstart">
+    <h2>Quick Start</h2>
+    <p>The simplest possible plugin — extend <code>VortexAdapter</code> so all lifecycle methods default to no-ops, add <code>@PluginMeta</code>, override what you need:</p>
+<pre data-lang="Java"><code><span class="an">@PluginMeta</span>(
+    id      = <span class="str">"hello"</span>,
+    name    = <span class="str">"Hello Plugin"</span>,
+    version = <span class="str">"1.0.0"</span>,
+    author  = <span class="str">"Echelon"</span>
+)
+<span class="kw">public class</span> <span class="ty">HelloPlugin</span> <span class="kw">extends</span> <span class="ty">VortexAdapter</span> {
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> onEnable() {
+        ctx().log(<span class="str">"Hello from plugin!"</span>);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> onDisable() {
+        ctx().log(<span class="str">"Goodbye!"</span>);
+    }
+}</code></pre>
+    <p>Drop the compiled <code>.class</code> into <code>vortex-module/</code> (as an include) or <code>vortex-module/system/</code> (as an override), restart, and the framework discovers and loads it automatically.</p>
+  </section>
+
+  <!-- ══ VORTEX PLUGIN ══ -->
+  <div class="class-divider" id="plugin-interface">
+    <span class="class-divider-badge badge-iface">public interface</span>
+    <h2>VortexPlugin</h2>
+  </div>
+
+  <section id="lifecycle">
+    <h2>Lifecycle</h2>
+    <p>Every plugin goes through exactly this sequence. The framework calls each method in order and never skips steps.</p>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content"><strong>onLoad(PluginContext)</strong> — Plugin class is instantiated and context is injected. Use this for initialization that needs framework access: data directories, configuration, registering services. Listeners and UI interaction are not yet safe here.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content"><strong>onEnable()</strong> — Plugin is fully activated. Safe to register event listeners, start timers, interact with Swing UI, talk to other plugins via <code>ctx().getPlugin()</code>.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content"><strong>onDisable()</strong> — Plugin is being deactivated. Remove any listeners, cancel timers, detach UI components. The plugin may be re-enabled later — <code>onEnable()</code> will be called again if so.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content"><strong>onUnload()</strong> — Final cleanup. The plugin class is about to be discarded. Release all resources, null out references, close file handles.</div>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Parameter</th><th>Safe to call framework?</th></tr></thead>
+      <tbody>
+        <tr><td><code>onLoad(PluginContext)</code></td><td><code>PluginContext</code> — the plugin's context object</td><td>Config, logging, data dir, service registry only</td></tr>
+        <tr><td><code>onEnable()</code></td><td>—</td><td>Yes — full framework access</td></tr>
+        <tr><td><code>onDisable()</code></td><td>—</td><td>Yes — cleanup only</td></tr>
+        <tr><td><code>onUnload()</code></td><td>—</td><td>Logging only — no UI</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ══ VORTEX ADAPTER ══ -->
+  <div class="class-divider" id="adapter">
+    <span class="class-divider-badge badge-class">public abstract class</span>
+    <h2>VortexAdapter</h2>
+  </div>
+
+  <section>
+    <p>Convenience base class that implements all four <code>VortexPlugin</code> methods as no-ops and stores the <code>PluginContext</code> passed to <code>onLoad()</code>. Use this instead of implementing <code>VortexPlugin</code> directly — you only override what your plugin actually needs.</p>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>onLoad(PluginContext)</code></td><td>Stores context</td><td>Always call <code>super.onLoad(ctx)</code> if you override this, or <code>ctx()</code> will return null.</td></tr>
+        <tr><td><code>onEnable()</code></td><td>no-op</td><td>Override to start your plugin.</td></tr>
+        <tr><td><code>onDisable()</code></td><td>no-op</td><td>Override to stop your plugin.</td></tr>
+        <tr><td><code>onUnload()</code></td><td>no-op</td><td>Override for final resource cleanup.</td></tr>
+        <tr><td><code>ctx()</code></td><td>returns stored context</td><td><code>protected</code> — available to all subclasses. Returns <code>null</code> before <code>onLoad()</code> is called (which never happens in practice).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="adapter-examples">
+    <h2>Adapter Examples</h2>
+
+    <h3>Service plugin</h3>
+<pre data-lang="Java"><code><span class="an">@PluginMeta</span>(id = <span class="str">"poller"</span>, name = <span class="str">"Data Poller"</span>)
+<span class="kw">public class</span> <span class="ty">DataPoller</span> <span class="kw">extends</span> <span class="ty">VortexAdapter</span> <span class="kw">implements</span> <span class="iface">VortexService</span> {
+    <span class="kw">private boolean</span> running;
+
+    <span class="an">@Override</span> <span class="kw">public void</span> start()        { running = <span class="kw">true</span>; }
+    <span class="an">@Override</span> <span class="kw">public void</span> stop()         { running = <span class="kw">false</span>; }
+    <span class="an">@Override</span> <span class="kw">public boolean</span> isRunning() { <span class="kw">return</span> running; }
+}</code></pre>
+
+    <h3>Command plugin</h3>
+<pre data-lang="Java"><code><span class="an">@PluginMeta</span>(id = <span class="str">"ping"</span>, name = <span class="str">"Ping Command"</span>)
+<span class="kw">public class</span> <span class="ty">PingCommand</span> <span class="kw">extends</span> <span class="ty">VortexAdapter</span> <span class="kw">implements</span> <span class="iface">VortexCommand</span> {
+    <span class="an">@Override</span> <span class="kw">public</span> <span class="ty">String</span> getCommandName() { <span class="kw">return</span> <span class="str">"ping"</span>; }
+    <span class="an">@Override</span> <span class="kw">public</span> <span class="ty">String</span> getDescription()  { <span class="kw">return</span> <span class="str">"Pong!"</span>; }
+    <span class="an">@Override</span> <span class="kw">public boolean</span> execute(<span class="ty">String</span>[] args) {
+        ctx().log(<span class="str">"Pong!"</span>);
+        <span class="kw">return true</span>;
+    }
+}</code></pre>
+    <p>A plugin class can implement multiple sub-interfaces at once — <code>extends VortexAdapter implements VortexService, VortexCommand</code> is valid.</p>
+  </section>
+
+  <!-- ══ @PLUGIN META ══ -->
+  <div class="class-divider" id="plugin-meta">
+    <span class="class-divider-badge badge-annotation">@interface (annotation)</span>
+    <h2>@PluginMeta</h2>
+  </div>
+
+  <section>
+    <p>Required on every class that implements <code>VortexPlugin</code> or any sub-interface. Retained at runtime (<code>@Retention(RUNTIME)</code>) so the registry can inspect it without instantiating the class.</p>
+<pre data-lang="Java"><code><span class="an">@PluginMeta</span>(
+    id           = <span class="str">"voice-commands"</span>,
+    name         = <span class="str">"Voice Commands"</span>,
+    version      = <span class="str">"2.1.0"</span>,
+    author       = <span class="str">"Echelon"</span>,
+    description  = <span class="str">"Troy voice integration"</span>,
+    dependencies = { <span class="str">"troy-core"</span>, <span class="str">"audio-engine"</span> },
+    priority     = <span class="str">10</span>,
+    autoStart    = <span class="kw">true</span>
+)</code></pre>
+  </section>
+
+  <section id="meta-attributes">
+    <h2>Attributes</h2>
+    <table class="data-table">
+      <thead><tr><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td><code>String</code></td><td>required</td><td>Unique plugin identifier. Convention: <code>lowercase-kebab-case</code>. Used for lookups, dependency resolution, and config directory naming.</td></tr>
+        <tr><td><code>name</code></td><td><code>String</code></td><td>required</td><td>Human-readable display name shown in UI.</td></tr>
+        <tr><td><code>version</code></td><td><code>String</code></td><td><code>"1.0.0"</code></td><td>Semantic version string, e.g. <code>"2.1.0"</code>.</td></tr>
+        <tr><td><code>author</code></td><td><code>String</code></td><td><code>""</code></td><td>Author name or team.</td></tr>
+        <tr><td><code>description</code></td><td><code>String</code></td><td><code>""</code></td><td>Short description shown in plugin lists / settings.</td></tr>
+        <tr><td><code>dependencies</code></td><td><code>String[]</code></td><td><code>{}</code></td><td>IDs of plugins this one depends on. The registry ensures these are loaded and enabled before this plugin.</td></tr>
+        <tr><td><code>priority</code></td><td><code>int</code></td><td><code>0</code></td><td>Load order. Higher = loaded first. Plugins at the same priority load in discovery order. Use higher values for core/infrastructure plugins.</td></tr>
+        <tr><td><code>autoStart</code></td><td><code>boolean</code></td><td><code>true</code></td><td>If <code>true</code>, the plugin starts automatically on boot. If <code>false</code>, it must be enabled manually (e.g., via settings UI).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="dependency-ordering">
+    <h2>Dependency Ordering</h2>
+    <p>When dependencies are declared, the registry loads them in topological order: a plugin's dependencies are always fully loaded and enabled before <code>onLoad()</code> is called on the depending plugin. Circular dependencies are detected and logged as errors.</p>
+    <div class="callout callout-warn">
+      <strong>Dependency IDs must match exactly</strong>
+      The <code>id</code> in <code>dependencies</code> must be the exact string used in the dependency plugin's <code>@PluginMeta(id = "...")</code>. A mismatch will cause the registry to log a warning and load the plugin anyway without guaranteeing order.
+    </div>
+  </section>
+
+  <!-- ══ PLUGIN CONTEXT ══ -->
+  <div class="class-divider" id="context">
+    <span class="class-divider-badge badge-iface">public interface</span>
+    <h2>PluginContext</h2>
+  </div>
+
+  <section>
+    <p>The sole gateway between a plugin and the framework. Passed to every plugin on <code>onLoad()</code> and stored by <code>VortexAdapter.ctx()</code>. Plugins must interact with the framework <em>only</em> through this interface — no direct access to internal APIs.</p>
+  </section>
+
+  <section id="context-identity">
+    <h2>Identity</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>getPluginId()</code></td><td><code>String</code></td><td>This plugin's <code>@PluginMeta(id)</code>.</td></tr>
+        <tr><td><code>getMeta()</code></td><td><code>PluginMeta</code></td><td>The full annotation object — access any attribute via reflection.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="context-fs">
+    <h2>File System</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>getDataDir()</code></td><td><code>Path</code></td><td>Plugin-specific persistent data directory. Created automatically. Path: <code>echo/vortex-module/plugin-data/{id}/</code>. Safe to read and write across restarts.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="context-config">
+    <h2>Configuration</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>getConfig()</code></td><td><code>Properties</code></td><td>Loads and returns this plugin's config from <code>{dataDir}/config.properties</code>. Returns empty <code>Properties</code> if none saved yet.</td></tr>
+        <tr><td><code>saveConfig(Properties)</code></td><td><code>void</code></td><td>Persists config to disk, overwriting previous file.</td></tr>
+      </tbody>
+    </table>
+<pre data-lang="Java"><code><span class="an">@Override</span>
+<span class="kw">public void</span> onLoad(<span class="ty">PluginContext</span> ctx) {
+    <span class="kw">super</span>.onLoad(ctx);
+    <span class="ty">Properties</span> cfg = ctx.getConfig();
+    <span class="ty">String</span> endpoint = cfg.getProperty(<span class="str">"api.endpoint"</span>, <span class="str">"https://default.api/"</span>);
+    <span class="cm">// ... use endpoint ...</span>
+}</code></pre>
+  </section>
+
+  <section id="context-logging">
+    <h2>Logging</h2>
+    <p>All log methods prefix the output with the plugin ID automatically.</p>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Level</th></tr></thead>
+      <tbody>
+        <tr><td><code>log(String)</code></td><td>INFO</td></tr>
+        <tr><td><code>warn(String)</code></td><td>WARNING</td></tr>
+        <tr><td><code>error(String)</code></td><td>ERROR</td></tr>
+        <tr><td><code>error(String, Throwable)</code></td><td>ERROR + stack trace</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="context-plugins">
+    <h2>Plugin Interaction</h2>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>getPlugin(String id)</code></td><td><code>VortexPlugin</code></td><td>Look up another plugin by its <code>@PluginMeta(id)</code>. Returns <code>null</code> if not found or not loaded. Cast to the specific type if the interface is known.</td></tr>
+        <tr><td><code>isPluginEnabled(String id)</code></td><td><code>boolean</code></td><td>Returns <code>true</code> only if a plugin with that ID is loaded and currently enabled.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="context-services">
+    <h2>Service Registry</h2>
+    <p>Plugins can expose APIs to each other through a typed service registry keyed by interface class. This avoids tight coupling — consumers don't need a reference to the concrete implementation class.</p>
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;T&gt; registerService(Class&lt;T&gt;, T)</code></td><td>Publish a service under its interface class. Any other plugin can retrieve it by the same class key.</td></tr>
+        <tr><td><code>&lt;T&gt; getService(Class&lt;T&gt;)</code></td><td>Retrieve a service by interface. Returns <code>null</code> if not yet registered.</td></tr>
+      </tbody>
+    </table>
+<pre data-lang="Java"><code><span class="cm">// Provider plugin — registers an API for others to use</span>
+<span class="an">@Override</span>
+<span class="kw">public void</span> onLoad(<span class="ty">PluginContext</span> ctx) {
+    <span class="kw">super</span>.onLoad(ctx);
+    ctx.registerService(<span class="ty">WeatherAPI</span>.<span class="kw">class</span>, <span class="kw">new</span> <span class="ty">WeatherAPIImpl</span>());
+}
+
+<span class="cm">// Consumer plugin — retrieves and uses the API</span>
+<span class="an">@Override</span>
+<span class="kw">public void</span> onEnable() {
+    <span class="ty">WeatherAPI</span> weather = ctx().getService(<span class="ty">WeatherAPI</span>.<span class="kw">class</span>);
+    <span class="kw">if</span> (weather != <span class="kw">null</span>) {
+        ctx().log(<span class="str">"Today: "</span> + weather.getForecast());
+    }
+}</code></pre>
+    <div class="callout callout-info">
+      <strong>Register in onLoad, consume in onEnable</strong>
+      Services should be registered during <code>onLoad()</code>. Consumers should retrieve them during <code>onEnable()</code> — by this point, all dependencies (which declare <code>@PluginMeta(dependencies = {...})</code>) are guaranteed to have completed their <code>onLoad()</code>.
+    </div>
+  </section>
+
+</main>
+</div>
+</body>
+</html>
