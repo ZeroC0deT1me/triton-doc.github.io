@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>WindowFactory — Triton Framework</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
+<style>  a.xref{text-decoration:none;cursor:pointer}  a.xref>code{color:var(--accent2);border-color:color-mix(in srgb,var(--accent2) 45%,var(--border));transition:.15s}  a.xref:hover>code{background:color-mix(in srgb,var(--accent2) 18%,transparent);border-color:var(--accent2);color:#fff}
   :root{--bg:#0b0d12;--surface:#111420;--surface2:#181c2b;--border:#232840;--accent:#4f8ef7;--accent2:#a78bfa;--warn:#f59e0b;--danger:#ef4444;--success:#22c55e;--text:#d4d8f0;--muted:#6b7280;--code-bg:#0d1117}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
@@ -150,12 +150,12 @@ f.setVisible(<span class="kw">true</span>);
 
   <section id="apply-chrome">
     <h2>applyCustomChrome()</h2>
-    <p>Can be called on any pre-existing undecorated <code>JFrame</code> to retrofit Triton chrome. Forces <code>setUndecorated(true)</code> if needed, replaces the content pane with a new <code>ChromeContentPane</code>, adds the title bar to <code>NORTH</code>, installs the resizer and panic-unstick, then marks the root pane with <code>"echelon.chromed" = Boolean.TRUE</code> to prevent double-wrapping.</p>
+    <p>Can be called on any pre-existing undecorated <code>JFrame</code> to retrofit Triton chrome. Forces <code>setUndecorated(true)</code> if needed, replaces the content pane with a new <a class="xref" href="ChromeContentPane.html"><code>ChromeContentPane</code></a>, adds the title bar to <code>NORTH</code>, installs the resizer and panic-unstick, then marks the root pane with <code>"echelon.chromed" = Boolean.TRUE</code> to prevent double-wrapping.</p>
   </section>
 
   <section id="title-bar">
     <h2>buildTitleBar()</h2>
-    <p>Private method that returns a <code>JPanel</code> named <code>"EchelonTitleBar"</code> — this name is how <code>ChromeContentPane</code> and <code>EchelonChromeBridge</code> detect existing chrome. Layout is <code>BorderLayout</code>:</p>
+    <p>Private method that returns a <code>JPanel</code> named <code>"EchelonTitleBar"</code> — this name is how <a class="xref" href="ChromeContentPane.html"><code>ChromeContentPane</code></a> and <a class="xref" href="EchelonChromeBridge.html"><code>EchelonChromeBridge</code></a> detect existing chrome. Layout is <code>BorderLayout</code>:</p>
     <table class="data-table">
       <thead><tr><th>Region</th><th>Content</th></tr></thead>
       <tbody>
